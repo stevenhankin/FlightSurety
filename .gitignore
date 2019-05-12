@@ -1,3 +1,6 @@
+.secret
+client/
+
 # Logs
 logs
 *.log
