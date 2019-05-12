@@ -1,5 +1,6 @@
 .secret
 client/
+.idea/
 
 # Logs
 logs
