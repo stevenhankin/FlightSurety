@@ -105,7 +105,6 @@ contract FlightSuretyData {
                             ) 
                             external
                             requireContractOwner
-                            requireIsOperational
     {
         operational = mode;
     }
@@ -150,6 +149,7 @@ contract FlightSuretyData {
                             )
                             external
                             payable
+                            requireAuthorizedCaller
     {
 
     }
@@ -161,7 +161,8 @@ contract FlightSuretyData {
                                 (
                                 )
                                 external
-                                pure
+                                view
+                                requireAuthorizedCaller
     {
     }
     
@@ -174,7 +175,8 @@ contract FlightSuretyData {
                             (
                             )
                             external
-                            pure
+                            view
+                            requireAuthorizedCaller
     {
     }
 
@@ -188,6 +190,7 @@ contract FlightSuretyData {
                             )
                             public
                             payable
+                            requireAuthorizedCaller
     {
     }
 
@@ -199,7 +202,7 @@ contract FlightSuretyData {
                         )
                         pure
                         internal
-                        returns(bytes32) 
+                        returns(bytes32)
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
@@ -210,7 +213,8 @@ contract FlightSuretyData {
     */
     function() 
                             external 
-                            payable 
+                            payable
+                            requireAuthorizedCaller
     {
         fund();
     }

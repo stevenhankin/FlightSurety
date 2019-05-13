@@ -1,6 +1,6 @@
 
 var Test = require('../config/testConfig.js');
-var BigNumber = require('bignumber.js');
+// var BigNumber = require('bignumber.js');
 
 contract('Flight Surety Tests', async (accounts) => {
 
@@ -31,7 +31,7 @@ contract('Flight Surety Tests', async (accounts) => {
       let accessDenied = false;
       try 
       {
-          await config.flightSuretyData.setOperatingStatus(false, { from: config.testAddresses[2] });
+          await config.flightSurety.setOperatingStatus(false, { from: config.testAddresses[2] });
       }
       catch(e) {
           accessDenied = true;
@@ -62,7 +62,7 @@ contract('Flight Surety Tests', async (accounts) => {
       let reverted = false;
       try 
       {
-          await config.flightSurety.setTestingMode(true);
+          await config.flightSurety.registerAirline();
       }
       catch(e) {
           reverted = true;
@@ -73,6 +73,8 @@ contract('Flight Surety Tests', async (accounts) => {
       await config.flightSuretyData.setOperatingStatus(true);
 
   });
+
+
 
   it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
     
@@ -92,6 +94,6 @@ contract('Flight Surety Tests', async (accounts) => {
     assert.equal(result, false, "Airline should not be able to register another airline if it hasn't provided funding");
 
   });
- 
+
 
 });

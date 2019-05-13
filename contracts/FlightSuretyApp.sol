@@ -97,8 +97,7 @@ contract FlightSuretyApp {
                             (   
                             )
                             external
-                            pure
-//                            requireIsOperational
+                            requireIsOperational
                             returns(bool success, uint256 votes)
     {
         return (success, 0);
