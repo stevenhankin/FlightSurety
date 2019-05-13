@@ -20,6 +20,8 @@ contract FlightSuretyData {
     }
     mapping(bytes32 => Flight) private flights;
 
+    mapping(address => bool) private authorizedAppContracts;
+
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -64,6 +66,16 @@ contract FlightSuretyData {
         _;
     }
 
+
+    /**
+    * @dev Modifier that requires the calling contract has been authorized
+    */
+    modifier requireAuthorizedCaller()
+    {
+        require(authorizedAppContracts[msg.sender], "Caller is not an authorized contract");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
@@ -98,6 +110,18 @@ contract FlightSuretyData {
         operational = mode;
     }
 
+
+    /**
+    * @dev Authorize an App Contract to delegate to this data contract
+    */
+    function authorizeCaller(address _appContract)
+    public
+    {
+        authorizedAppContracts[_appContract] = true;
+    }
+
+
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -111,7 +135,8 @@ contract FlightSuretyData {
                             (   
                             )
                             external
-                            pure
+                            view
+                            requireAuthorizedCaller
     {
     }
 

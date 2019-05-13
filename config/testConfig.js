@@ -23,8 +23,11 @@ var Config = async function(accounts) {
     let owner = accounts[0];
     let firstAirline = accounts[1];
 
+    console.log('t1');
     let flightSuretyData = await FlightSuretyData.new();
-    let flightSuretyApp = await FlightSuretyApp.new();
+    console.log('t2',flightSuretyData.address);
+    let flightSuretyApp = await FlightSuretyApp.new(flightSuretyData.address);
+    console.log('t3');
 
     
     return {
@@ -35,7 +38,7 @@ var Config = async function(accounts) {
         flightSuretyData: flightSuretyData,
         flightSuretyApp: flightSuretyApp
     }
-}
+};
 
 module.exports = {
     Config: Config

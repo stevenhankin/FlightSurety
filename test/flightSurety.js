@@ -6,8 +6,11 @@ contract('Flight Surety Tests', async (accounts) => {
 
   var config;
   before('setup contract', async () => {
+      console.log('@1',{accounts});
     config = await Test.Config(accounts);
+      console.log('@2');
     await config.flightSuretyData.authorizeCaller(config.flightSuretyApp.address);
+      console.log('@3');
   });
 
   /****************************************************************************************/

@@ -17,7 +17,7 @@ contract FlightSuretyApp {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    // Flight status codees
+    // Flight status codes
     uint8 private constant STATUS_CODE_UNKNOWN = 0;
     uint8 private constant STATUS_CODE_ON_TIME = 10;
     uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
@@ -44,7 +44,7 @@ contract FlightSuretyApp {
     modifier requireIsOperational() 
     {
          // Delegates to data contract's status
-        require(isOperational(), "Contract is currently not operational");
+        require(flightSuretyData.isOperational(), "Contract is currently not operational");
         _;
     }
 
@@ -77,13 +77,13 @@ contract FlightSuretyApp {
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
-    function isOperational() 
-                            public 
-                            view
-                            returns(bool) 
-    {
-        return flightSuretyData.isOperational();  // Delegates to data contract's status
-    }
+//    function isOperational()
+//                            public
+//                            view
+//                            returns(bool)
+//    {
+//        return flightSuretyData.isOperational();  // Delegates to data contract's status
+//    }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
