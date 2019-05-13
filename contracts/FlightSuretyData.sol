@@ -92,7 +92,8 @@ contract FlightSuretyData {
                                 bool mode
                             ) 
                             external
-                            requireContractOwner 
+                            requireContractOwner
+                            requireIsOperational
     {
         operational = mode;
     }

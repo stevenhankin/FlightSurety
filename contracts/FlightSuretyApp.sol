@@ -43,9 +43,9 @@ contract FlightSuretyApp {
     */
     modifier requireIsOperational() 
     {
-         // Modify to call data contract's status
-        require(true, "Contract is currently not operational");  
-        _;  // All modifiers require an "_" which indicates where the function body will be added
+         // Delegates to data contract's status
+        require(isOperational(), "Contract is currently not operational");
+        _;
     }
 
     /**
@@ -79,10 +79,10 @@ contract FlightSuretyApp {
 
     function isOperational() 
                             public 
-                            pure 
+                            view
                             returns(bool) 
     {
-        return true;  // Modify to call data contract's status
+        return flightSuretyData.isOperational();  // Delegates to data contract's status
     }
 
     /********************************************************************************************/
@@ -98,6 +98,7 @@ contract FlightSuretyApp {
                             )
                             external
                             pure
+//                            requireIsOperational
                             returns(bool success, uint256 votes)
     {
         return (success, 0);
@@ -113,6 +114,7 @@ contract FlightSuretyApp {
                                 )
                                 external
                                 pure
+//                                requireIsOperational
     {
 
     }
@@ -206,6 +208,7 @@ contract FlightSuretyApp {
                             )
                             external
                             payable
+                            requireIsOperational
     {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
@@ -246,6 +249,7 @@ contract FlightSuretyApp {
                             uint8 statusCode
                         )
                         external
+                        requireIsOperational
     {
         require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
 
@@ -276,7 +280,7 @@ contract FlightSuretyApp {
                         )
                         pure
                         internal
-                        returns(bytes32) 
+                        returns(bytes32)
     {
         return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
@@ -331,5 +335,8 @@ contract FlightSuretyApp {
 
 
 contract FlightSuretyData {
-
+    function isOperational()
+    public
+    view
+    returns(bool);
 }
