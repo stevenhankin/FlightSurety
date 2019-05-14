@@ -62,7 +62,7 @@ contract FlightSuretyApp {
     /********************************************************************************************/
 
     /**
-    * @dev Contract constructor
+    * @dev Contract constructor.  First airline is registered when contract deployed
     *
     */
     constructor
@@ -94,13 +94,19 @@ contract FlightSuretyApp {
      *
      */
     function registerAirline
-                            (   
+                            (   address airline
                             )
                             external
                             requireIsOperational
                             returns(bool success, uint256 votes)
     {
-        return (success, 0);
+        success = true;
+        votes = 0;
+        flightSuretyData.registerAirline
+        (    airline
+        );
+
+        return (success, votes);
     }
 
 
@@ -338,4 +344,8 @@ contract FlightSuretyData {
     public
     view
     returns(bool);
+    function registerAirline
+    (   address airline
+    )
+    external;
 }

@@ -22,6 +22,9 @@ contract FlightSuretyData {
 
     mapping(address => bool) private authorizedAppContracts;
 
+//    uint8 airlineNum = 0;
+    address[] private airlines;
+
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
     /********************************************************************************************/
@@ -30,13 +33,17 @@ contract FlightSuretyData {
     /**
     * @dev Constructor
     *      The deploying account becomes contractOwner
+    *      First airline is registered at deployment
     */
     constructor
-                                (
+                                (address firstAirline
                                 ) 
                                 public 
     {
+//        require(firstAirline!=0,'Must specify the first airline to register when deploying contract');
         contractOwner = msg.sender;
+        airlines.push(firstAirline);
+//        airlineNum=1;
     }
 
     /********************************************************************************************/
@@ -131,12 +138,13 @@ contract FlightSuretyData {
     *
     */   
     function registerAirline
-                            (   
+                            (   address airline
                             )
                             external
-                            view
                             requireAuthorizedCaller
+                            requireIsOperational
     {
+        airlines.push(airline);
     }
 
 
@@ -219,6 +227,24 @@ contract FlightSuretyData {
         fund();
     }
 
+    /**
+    * @dev Returns true if supplied address matches an airline address
+    */
+    function isAirline(address _airline)
+    public
+    view
+    returns(bool)
+    {
+        uint8 i = 0;
+        bool addrIsAirline = false;
+        while (i < airlines.length && !addrIsAirline) {
+            if (airlines[i] == _airline) {
+                addrIsAirline = true;
+            }
+            i++;
+        }
+        return addrIsAirline;
+    }
 
 }
 
