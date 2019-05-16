@@ -57,6 +57,15 @@ contract FlightSuretyApp {
         _;
     }
 
+    /**
+    * @dev Modifier requires the Airline that is calling is already funded
+    */
+    modifier requireIsFundedAirline()
+    {
+        require(flightSuretyData.isFundedAirline(), "Airline is not funded");
+        _;
+    }
+
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
     /********************************************************************************************/
@@ -100,6 +109,7 @@ contract FlightSuretyApp {
     )
     external
     requireIsOperational
+    requireIsFundedAirline
     returns (bool success, uint256 votes)
     {
         success = true;
@@ -110,6 +120,8 @@ contract FlightSuretyApp {
 
         return (success, votes);
     }
+
+
 
 
     /**
@@ -344,6 +356,11 @@ contract FlightSuretyApp {
 
 contract FlightSuretyData {
     function isOperational()
+    public
+    view
+    returns (bool);
+
+    function isFundedAirline()
     public
     view
     returns (bool);
