@@ -27,7 +27,11 @@ contract FlightSuretyApp {
 
     address private contractOwner;          // Account used to deploy contract
 
-    FlightSuretyData flightSuretyData; // App links to the Data Contract
+    FlightSuretyData  flightSuretyData ; // App links to the Data Contract
+    address payable private  flightSuretyDataAddress; // Need payable address to the data contract to transfer ether
+
+    uint256 private constant JOIN_FEE = 10 ether; // Fee for an airline to join
+
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -60,11 +64,22 @@ contract FlightSuretyApp {
     /**
     * @dev Modifier requires the Airline that is calling is already funded
     */
-    modifier requireIsFundedAirline()
+    modifier requireIsFundedAirline(address airline)
     {
-        require(flightSuretyData.isFundedAirline(), "Airline is not funded");
+        require(flightSuretyData.isFundedAirline(airline), "Airline is not funded");
         _;
     }
+
+    /**
+    * @dev Modifier prevent double-funding of airline
+    */
+    modifier requireIsNotFundedAirline(address airline)
+    {
+        require( flightSuretyData.isFundedAirline(airline) == false, "Airline is already funded - should not fund twice");
+        _;
+    }
+
+
 
     /********************************************************************************************/
     /*                                       CONSTRUCTOR                                        */
@@ -79,8 +94,10 @@ contract FlightSuretyApp {
     public
     {
         contractOwner = msg.sender;
-        flightSuretyData = FlightSuretyData(dataContractAddress);
         // Link to the deployed data contract
+        // and get address for payments to it
+        flightSuretyData = FlightSuretyData(dataContractAddress);
+        flightSuretyDataAddress = address(uint160(address(flightSuretyData)));
     }
 
     /********************************************************************************************/
@@ -92,16 +109,39 @@ contract FlightSuretyApp {
     view
     returns (bool)
     {
-        return flightSuretyData.isOperational();
         // Delegates to data contract's status
+        return flightSuretyData.isOperational();
+    }
+
+    function isFundedAirline(address airline)
+    public
+    view
+    returns (bool)
+    {
+        return flightSuretyData.isFundedAirline(airline);
     }
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
 
+    /***
+     * @dev Return number of airlines registered so far
+     *
+     */
+    function registeredAirlinesCount()
+    public
+    view
+    returns (uint256) {
+        return flightSuretyData.registeredAirlinesCount();
+    }
+
     /**
      * @dev Add an airline to the registration queue
+     *
+     * First 4 airlines can be registered by a single funded airline
+     * 5th and more airlines require M-of-N consensus of 50% or more to register
+     * (i.e. the same airline must be registered by 50% of existing airlines to take effect)
      *
      */
     function registerAirline
@@ -109,19 +149,26 @@ contract FlightSuretyApp {
     )
     external
     requireIsOperational
-    requireIsFundedAirline
-    returns (bool success, uint256 votes)
+    requireIsFundedAirline(msg.sender) // the SENDER needs to be a funded airline
     {
-        success = true;
-        votes = 0;
-        flightSuretyData.registerAirline
-        (airline
-        );
-
-        return (success, votes);
+        // Only called once for a given airline for first 4
+        flightSuretyData.registerAirline(airline);
     }
 
-
+    /**
+     * @dev Initial funding for the insurance. Unless there are too many delayed flights
+     *      resulting in insurance payouts, the contract should be self-sustaining
+     *
+     */
+    function fund()
+    external payable
+    requireIsNotFundedAirline(msg.sender) // Must be not funded otherwise will be overpaying with multiple funds
+    {
+        require(msg.value >= JOIN_FEE, "Funding payment too low");
+        uint256 amountToReturn = msg.value - JOIN_FEE;
+        flightSuretyData.fund.value(JOIN_FEE)(msg.sender); // transfer payment on to data contract and flag as funded
+        msg.sender.transfer(amountToReturn);         // ..before crediting any overspend
+    }
 
 
     /**
@@ -133,7 +180,7 @@ contract FlightSuretyApp {
     )
     external
     pure
-        //                                requireIsOperational
+        //requireIsOperational
     {
 
     }
@@ -360,7 +407,7 @@ contract FlightSuretyData {
     view
     returns (bool);
 
-    function isFundedAirline()
+    function isFundedAirline(address _airline)
     public
     view
     returns (bool);
@@ -368,5 +415,16 @@ contract FlightSuretyData {
     function registerAirline
     (address airline
     )
-    external;
+    external
+    returns (bool success, uint256 votes);
+
+    function registeredAirlinesCount()
+    public
+    view
+    returns (uint256);
+
+    function fund
+    (address airline)
+    public
+    payable;
 }

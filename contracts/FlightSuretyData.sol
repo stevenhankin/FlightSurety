@@ -19,14 +19,28 @@ contract FlightSuretyData {
         address airline;
     }
 
+
+    struct Airline {
+//        bool isRegistered;
+//        uint8 statusCode;
+//        uint256 updatedTimestamp;
+        address airlineAccount;
+        bool isFunded;
+
+    }
+
+    Airline[] private airlines;
+
+    uint256 SENTINEL = 2^256-1; // Used as a return value for "not found"
+
     mapping(bytes32 => Flight) private flights;
 
     mapping(address => bool) private authorizedAppContracts;
-    mapping(address => bool) private funded;                  // maps an airline to true when funded
+//    mapping(address => bool) private funded;                  // maps an airline to true when funded
 
-    uint256 totalFund;   // Total available fund for contract
 
-    address[] private airlines;
+    uint256 private constant JOIN_FEE = 10 ether; // Fee for an airline to join
+
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -45,7 +59,8 @@ contract FlightSuretyData {
     {
         require(firstAirline != address(0x0), 'Must specify the first airline to register when deploying contract');
         contractOwner = msg.sender;
-        airlines.push(firstAirline);
+//        Airline airline = new Airline({airlineAccount:firstAirline, funded:false});
+        airlines.push(Airline({airlineAccount:firstAirline, isFunded:false}));
     }
 
     /********************************************************************************************/
@@ -89,9 +104,9 @@ contract FlightSuretyData {
     /**
     * @dev Modifier requires the Airline that is calling is already funded
     */
-    modifier requireIsFundedAirline()
+    modifier requireIsFundedAirline(address airline)
     {
-        require(isFundedAirline(), "Airline is not funded");
+        require(isFundedAirline(airline), "Airline is not funded");
         _;
     }
 
@@ -139,10 +154,39 @@ contract FlightSuretyData {
     }
 
 
+    // Return index of the Airline for the matching address
+    // or SENTINEL if no match
+    function findAirline(address _airline)
+    internal
+    view
+    returns (uint256)
+    {
+        // Loop through airline until found or end
+        uint256 i = 0;
+        while (i < airlines.length) {
+            if (airlines[i].airlineAccount == _airline) {
+                return i;
+            }
+            i++;
+        }
+        return SENTINEL;
+    }
+
 
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
+
+    /***
+     * @dev Return number of airlines registered so far
+     *
+     */
+    function registeredAirlinesCount()
+    public
+    view
+    returns (uint256) {
+        return airlines.length;
+    }
 
     /**
      * @dev Add an airline to the registration queue
@@ -150,13 +194,28 @@ contract FlightSuretyData {
      *
      */
     function registerAirline
-    (address airline
+    (address airlineAccount
     )
     external
     requireAuthorizedCaller
     requireIsOperational
+//    returns (bool success, uint256 votes)
     {
-        airlines.push(airline);
+        if (registeredAirlinesCount() <= 4) {
+//            Airline airline = new Airline({airlineAccount:airlineAccount, funded:false});
+            airlines.push(Airline({airlineAccount:airlineAccount, isFunded:false}));     // registered..
+//            funded[airline] = false;    // ..but not funded yet
+//            success = true;
+//            votes = 1;
+//            return (success,votes);
+        } else {
+//            success = false;
+//            votes = 0;
+        }
+
+//        airlines.push(airline);     // registered..
+//        funded[airline] = false;    // ..but not funded yet
+//        return (success,votes);
     }
 
 
@@ -206,12 +265,17 @@ contract FlightSuretyData {
      *
      */
     function fund
-    (
-    )
+    (address airlineAddr)
     public
     payable
     requireAuthorizedCaller
     {
+        require(msg.value >= JOIN_FEE, "Funding payment (of Data Contract) too low");
+        uint256 idx = findAirline(airlineAddr);
+        if (idx != SENTINEL) {
+            airlines[idx].isFunded = true;
+        }
+//        funded[airline] = true;
     }
 
     function getFlightKey
@@ -236,7 +300,7 @@ contract FlightSuretyData {
     payable
     requireAuthorizedCaller
     {
-        fund();
+//        fund();
     }
 
     /**
@@ -247,10 +311,11 @@ contract FlightSuretyData {
     view
     returns (bool)
     {
+        // Loop through airline until found or end
         uint8 i = 0;
         bool addrIsAirline = false;
         while (i < airlines.length && !addrIsAirline) {
-            if (airlines[i] == _airline) {
+            if (airlines[i].airlineAccount == _airline) {
                 addrIsAirline = true;
             }
             i++;
@@ -262,12 +327,25 @@ contract FlightSuretyData {
     /**
     * @dev Returns true if airline is funded
     */
-    function isFundedAirline()
+    function isFundedAirline(address _airline)
     public
     view
     returns (bool)
     {
-        return funded[msg.sender];
+        uint256 idx = findAirline(_airline);
+        if (idx != SENTINEL) {
+            return airlines[idx].isFunded;
+        }
+//        // Loop through airline until found or end
+//        uint8 i = 0;
+//        bool isFunded = false;
+//        while (i < airlines.length && !addrIsAirline) {
+//            if (airlines[i].airlineAccount == _airline) {
+//                return airlines[i].isFunded;
+//            }
+//            i++;
+//        }
+        return false; // Airline account doesn't exist
     }
 
 }
