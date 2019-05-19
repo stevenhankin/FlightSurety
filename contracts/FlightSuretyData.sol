@@ -9,6 +9,9 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
+    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
+
+
     address private contractOwner;                          // Account used to deploy contract
     bool private operational = true;                        // Blocks all state changes throughout the contract if false
 
@@ -22,6 +25,7 @@ contract FlightSuretyData {
     struct Flight {
         address airline;
         uint256 departureTimestamp;
+        uint8 statusCode;
     }
 
 
@@ -30,20 +34,16 @@ contract FlightSuretyData {
         bool isRegistered;
         bool isFunded;
         uint256 votes;
-        mapping(address => bool) voters;            // keep track of airlines that have already voted
+        mapping(address => bool) voters;                    // keep track of airlines that have already voted
     }
 
     Airline[] private airlines;
     Insurance[] private insurance;                          // List of passenger insurance
-
-    uint256 private constant SENTINEL = 9999999999; //2^250; // Used as a return value for "not found"
-
-    mapping(bytes32 => Flight) private flights;   // keys (see getFlightKey) of flights belonging to airline
-
+    mapping(address => uint256) private passengerCredit;    // For a given passenger has the total credit due
+    uint256 private constant SENTINEL = 9999999999;         // Used as a return value for "not found"
+    mapping(bytes32 => Flight) private flights;             // keys (see getFlightKey) of flights belonging to airline
     mapping(address => bool) private authorizedAppContracts;
-
     uint256 private constant JOIN_FEE = 10 ether; // Fee for an airline to join
-
 
     /********************************************************************************************/
     /*                                       EVENT DEFINITIONS                                  */
@@ -200,6 +200,17 @@ contract FlightSuretyData {
     }
 
 
+    // Used for testing
+    function getCredit(address passenger)
+    public
+    view
+    requireContractOwner
+    returns (uint256)
+    {
+        return passengerCredit[passenger];
+    }
+
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
@@ -284,13 +295,10 @@ contract FlightSuretyData {
     requireAuthorizedCaller
     requireIsFundedAirline(_airline)
     {
-        uint256 idx = findAirline(_airline);
         bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
-        Flight memory flight;
-        flight.airline = _airline;
-        flight.departureTimestamp = _timestamp;
-        flights[flightKey] = flight;
+        flights[flightKey] = Flight({airline : _airline, departureTimestamp : _timestamp, statusCode : 0});
     }
+
 
 
     /**
@@ -298,7 +306,7 @@ contract FlightSuretyData {
      *
      */
     function buy
-    (   address passenger,
+    (address passenger,
         address _airline,
         string calldata _flight,
         uint256 _timestamp
@@ -309,24 +317,55 @@ contract FlightSuretyData {
     requireAuthorizedCaller
     requireIsFundedAirline(_airline)
     {
-        uint256 idx = findAirline(_airline);
         bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
         Flight memory flight = flights[flightKey];
         require(address(flight.airline) != address(0), 'Flight does not exist');
-        Insurance memory _insurance = Insurance({flightKey: flightKey, passenger:passenger, payment:msg.value} );
+        Insurance memory _insurance = Insurance({flightKey : flightKey, passenger : passenger, payment : msg.value});
         insurance.push(_insurance);
     }
 
     /**
-     *  @dev Credits payouts to insurees
+     *  @dev Credits payouts to insurees at 1.5x the original payment
     */
     function creditInsurees
     (
+        bytes32 delayedFlightKey
+    )
+    internal
+    {
+        uint256 i = 0;
+        uint256 totalRecords = insurance.length;
+        while (i < totalRecords) {
+            Insurance memory _insurance = insurance[i];
+            if (_insurance.flightKey == delayedFlightKey) {
+                address passenger = _insurance.passenger;
+                // Add payment to each passenger affected by the delayed flight
+                // and at 1.5x original amount
+                uint256 halfOriginal = _insurance.payment.div(2);
+                passengerCredit[passenger] += _insurance.payment.add(halfOriginal);
+                // ..and remove insurance record to prevent possible double-spend
+                delete insurance[i];
+            }
+            i++;
+        }
+    }
+
+
+    // Called after oracle has updated flight status
+    function processFlightStatus
+    (
+        address airline,
+        string calldata flight,
+        uint256 timestamp,
+        uint8 statusCode
     )
     external
-    view
-    requireAuthorizedCaller
     {
+        bytes32 flightKey = getFlightKey(airline, flight, timestamp);
+        flights[flightKey].statusCode = statusCode;
+        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+            creditInsurees(flightKey);
+        }
     }
 
 

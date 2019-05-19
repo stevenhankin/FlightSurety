@@ -260,8 +260,8 @@ contract FlightSuretyApp {
         uint8 statusCode
     )
     internal
-    pure
     {
+        flightSuretyData.processFlightStatus(airline,flight,timestamp,statusCode);
     }
 
 
@@ -512,4 +512,12 @@ contract FlightSuretyData {
     external
     payable;
 
+    function processFlightStatus
+    (
+        address airline,
+        string calldata flight,
+        uint256 timestamp,
+        uint8 statusCode
+    )
+    external;
 }

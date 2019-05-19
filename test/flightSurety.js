@@ -1,5 +1,5 @@
 var Test = require('../config/testConfig.js');
-// var BigNumber = require('bignumber.js');
+var BigNumber = require('bignumber.js');
 
 // Arbitrary constants for testing
 const FLIGHT_NAME = "BA101";
@@ -12,6 +12,9 @@ const TEN_ETHER = web3.utils.toWei("10");
 
 
 contract('Flight Surety Tests', async (accounts) => {
+
+    const passenger = accounts[8];
+    const airline5 = accounts[5];
 
 
     var config;
@@ -201,7 +204,7 @@ contract('Flight Surety Tests', async (accounts) => {
         let result = {};
         const num = await config.flightSuretyApp.registeredAirlinesCount();
         assert.equal(num.toNumber(), 4, 'At this point there should be 4 registered airlines (from previous steps)');
-        const airline5 = accounts[5];
+        
         // ACT
         try {
             await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
@@ -218,7 +221,7 @@ contract('Flight Surety Tests', async (accounts) => {
     it('(airline) cannot repeatedly have vote counted for same airline', async () => {
         // ARRANGE
         let result = {};
-        const airline5 = accounts[5];
+        
         let reverted = false;
         // ACT
         try {
@@ -236,7 +239,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(airline) cannot repeatedly have vote counted for same airline', async () => {
         // ARRANGE
-        const airline5 = accounts[5];
+        
         let reverted = false;
         let result = await config.flightSuretyApp.getAirlineStatus(airline5);
         const initialVote = result.votes.toNumber();
@@ -262,7 +265,7 @@ contract('Flight Surety Tests', async (accounts) => {
     it('(Multiparty Consensus) can register a fifth airline if it has not yet voted (2 of 4 votes) ', async () => {
         // ARRANGE
         let result = {};
-        const airline5 = accounts[5];
+        
 
         // ACT
         try {
@@ -283,7 +286,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(Airline Ante) fifth airline (registered) cannot participate when unfunded ', async () => {
         // ARRANGE
-        const airline5 = accounts[5];
+        
         const airline6 = accounts[6];
         let reverted = false;
 
@@ -301,7 +304,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(Airline Ante) fifth airline (registered, funded) can participate once funded ', async () => {
         // ARRANGE
-        const airline5 = accounts[5];
+        
         const airline6 = accounts[6];
         let reverted = false;
 
@@ -323,7 +326,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(Flight) a funded airline can add a flight schedule ', async () => {
         // ARRANGE
-        const airline5 = accounts[5];
+        
 
         let reverted = false;
 
@@ -340,11 +343,10 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
-    it('(Passenger) can pay up to 1 ether for purchasing flight insurance', async () => {
+    it('(Passenger Payment) can pay up to 1 ether for purchasing flight insurance', async () => {
         // ARRANGE
 
-        const passenger = accounts[8];
-        const airline5 = accounts[5];
+        
 
         let reverted = false;
 
@@ -360,5 +362,29 @@ contract('Flight Surety Tests', async (accounts) => {
         assert.equal(reverted, false, "A passenger should be able to buy insurance");
     });
 
+
+    it('(Passenger Repayment) passenger receives credit of 1.5X the amount they paid when delay due to airline', async () => {
+        // ARRANGE
+        let reverted = false;
+        let totalCredit = 0;
+        // Set status to Delayed to trigger credit
+        const STATUS_CODE_LATE_AIRLINE = 20;
+        await config.flightSuretyData.processFlightStatus(airline5, FLIGHT_NAME, FLIGHT_TIMESTAMP, STATUS_CODE_LATE_AIRLINE, {from: config.owner});
+
+        // ACT
+        try {
+            // "passenger was insured in a previous test case"
+            const result = await config.flightSuretyData.getCredit(passenger, {from: config.owner});
+            totalCredit = web3.utils.fromWei(result,'ether');
+        } catch (e) {
+            reverted = true;
+            console.error("Ooops - unexpected error!", {e})
+        }
+
+
+        // ASSERT
+        assert.equal(reverted, false, "A passenger should be credited if an airline causes a delay");
+        assert.equal(totalCredit, 1.5, "Passenger should receive 1.5 Ether for a 1 Ether insurance");
+    });
 
 });
