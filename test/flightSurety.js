@@ -1,6 +1,16 @@
 var Test = require('../config/testConfig.js');
 // var BigNumber = require('bignumber.js');
 
+// Arbitrary constants for testing
+const FLIGHT_NAME = "BA101";
+const FLIGHT_TIMESTAMP = parseInt(Date.now() + 100000 +  Math.random() * 100000, 10);
+const ONE_ETHER = web3.utils.toWei("1");
+const TWO_ETHER = web3.utils.toWei("2");
+const THREE_ETHER = web3.utils.toWei("3");
+const NINE_ETHER = web3.utils.toWei("9");
+const TEN_ETHER = web3.utils.toWei("10");
+
+
 contract('Flight Surety Tests', async (accounts) => {
 
 
@@ -101,11 +111,10 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(airline) cannot be funded below MINIMUM FUND requirements', async () => {
         // ARRANGE
-        const tenEth = web3.utils.toWei("9");
         let reverted = false;
         // ACT
         try {
-            await config.flightSuretyApp.fund({from: config.firstAirline, value: tenEth});
+            await config.flightSuretyApp.fund({from: config.firstAirline, value: NINE_ETHER});
         } catch (e) {
             reverted = true;
         }
@@ -118,10 +127,10 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(airline) can be FUNDED if funding requirements are met', async () => {
         // ARRANGE
-        const tenEth = web3.utils.toWei("10");
+
         // ACT
         try {
-            await config.flightSuretyApp.fund({from: config.firstAirline, value: tenEth});
+            await config.flightSuretyApp.fund({from: config.firstAirline, value: TEN_ETHER});
         } catch (e) {
             console.error("Ooops - unexpected error!", {e})
         }
@@ -139,11 +148,10 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(airline) cannot be funded twice', async () => {
         // ARRANGE
-        const tenEth = web3.utils.toWei("10");
         let reverted = false;
         // ACT
         try {
-            await config.flightSuretyApp.fund({from: config.firstAirline, value: tenEth});
+            await config.flightSuretyApp.fund({from: config.firstAirline, value: TEN_ETHER});
         } catch (e) {
             reverted = true;
         }
@@ -188,7 +196,7 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
-    it('(Multiparty Consensus, 5th airline) can request to register fifth airline, but will not initially succeed (minimum votes required)', async () => {
+    it('(Multiparty Consensus, >4 airlines) can request to register fifth airline, but will not initially succeed (minimum votes required)', async () => {
         // ARRANGE
         let result = {};
         const num = await config.flightSuretyApp.registeredAirlinesCount();
@@ -255,12 +263,11 @@ contract('Flight Surety Tests', async (accounts) => {
         // ARRANGE
         let result = {};
         const airline5 = accounts[5];
-        const tenEth = web3.utils.toWei("10");
 
         // ACT
         try {
             // Fund airline 2..
-            await config.flightSuretyApp.fund({from: accounts[2], value: tenEth});
+            await config.flightSuretyApp.fund({from: accounts[2], value: TEN_ETHER});
             // ..before attempting to register another airline
             await config.flightSuretyApp.registerAirline(airline5, {from: accounts[2]});
             result = await config.flightSuretyApp.getAirlineStatus(airline5);
@@ -297,12 +304,11 @@ contract('Flight Surety Tests', async (accounts) => {
         const airline5 = accounts[5];
         const airline6 = accounts[6];
         let reverted = false;
-        const tenEth = web3.utils.toWei("10");
 
         // ACT
         try {
             // Fund airline 5 so that it can participate..
-            await config.flightSuretyApp.fund({from: airline5, value: tenEth});
+            await config.flightSuretyApp.fund({from: airline5, value: TEN_ETHER});
             await config.flightSuretyApp.registerAirline(airline6, {from: airline5});
         } catch (e) {
             reverted = true;
@@ -314,6 +320,45 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
+
+    it('(Flight) a funded airline can add a flight schedule ', async () => {
+        // ARRANGE
+        const airline5 = accounts[5];
+
+        let reverted = false;
+
+        // ACT
+        try {
+            await config.flightSuretyApp.registerFlight(FLIGHT_NAME, FLIGHT_TIMESTAMP, {from: airline5});
+        } catch (e) {
+            reverted = true;
+            console.error("Ooops - unexpected error!", {e})
+        }
+
+        // ASSERT
+        assert.equal(reverted, false, "A funded airplane should be able to add flights");
+    });
+
+
+    it('(Passenger) can pay up to 1 ether for purchasing flight insurance', async () => {
+        // ARRANGE
+
+        const passenger = accounts[8];
+        const airline5 = accounts[5];
+
+        let reverted = false;
+
+        // ACT
+        try {
+            await config.flightSuretyApp.buy(airline5, FLIGHT_NAME, FLIGHT_TIMESTAMP, {from: passenger, value: THREE_ETHER});
+        } catch (e) {
+            reverted = true;
+            console.error("Ooops - unexpected error!", {e})
+        }
+
+        // ASSERT
+        assert.equal(reverted, false, "A passenger should be able to buy insurance");
+    });
 
 
 });

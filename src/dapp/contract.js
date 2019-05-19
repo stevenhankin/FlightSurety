@@ -23,11 +23,20 @@ export default class Contract {
             
             while(this.airlines.length < 5) {
                 this.airlines.push(accts[counter++]);
+
+                // Associate 2 flights with airline
+
+
             }
 
             while(this.passengers.length < 5) {
                 this.passengers.push(accts[counter++]);
             }
+
+
+            // Generate some test flights
+            const flights=[];
+
 
             callback();
         });

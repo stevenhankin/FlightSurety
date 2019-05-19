@@ -27,8 +27,8 @@ contract FlightSuretyApp {
 
     address private contractOwner;          // Account used to deploy contract
 
-    FlightSuretyData  flightSuretyData ; // App links to the Data Contract
-//    address payable private  flightSuretyDataAddress; // Need payable address to the data contract to transfer ether
+    FlightSuretyData  flightSuretyData; // App links to the Data Contract
+    //    address payable private  flightSuretyDataAddress; // Need payable address to the data contract to transfer ether
 
     uint256 private constant JOIN_FEE = 10 ether; // Fee for an airline to join
 
@@ -75,7 +75,7 @@ contract FlightSuretyApp {
     */
     modifier requireIsNotFundedAirline(address airline)
     {
-        require( flightSuretyData.isFundedAirline(airline) == false, "Airline is already funded - should not fund twice");
+        require(flightSuretyData.isFundedAirline(airline) == false, "Airline is already funded - should not fund twice");
         _;
     }
 
@@ -93,12 +93,12 @@ contract FlightSuretyApp {
     (address dataContractAddress)
     public
     {
-        require(dataContractAddress != address (0), 'Must supply the data contract associated with the app');
+        require(dataContractAddress != address(0), 'Must supply the data contract associated with the app');
         contractOwner = msg.sender;
         // Link to the deployed data contract
         // and get address for payments to it
         flightSuretyData = FlightSuretyData(dataContractAddress);
-//        flightSuretyDataAddress = address(uint160(address(flightSuretyData)));
+        //        flightSuretyDataAddress = address(uint160(address(flightSuretyData)));
     }
 
     /********************************************************************************************/
@@ -148,7 +148,7 @@ contract FlightSuretyApp {
     function getAirlineStatus(address airline)
     public
     view
-    returns ( bool isRegistered,
+    returns (bool isRegistered,
         bool isFunded,
         uint256 votes)
     {
@@ -183,7 +183,7 @@ contract FlightSuretyApp {
     requireIsFundedAirline(msg.sender) // the SENDER needs to be a funded airline
     {
         // Only called once for a given airline for first 4
-        flightSuretyData.registerAirline(airline,msg.sender);
+        flightSuretyData.registerAirline(airline, msg.sender);
     }
 
     /**
@@ -197,10 +197,37 @@ contract FlightSuretyApp {
     requireIsNotFundedAirline(msg.sender) // Must be not funded otherwise will be overpaying with multiple funds
     {
         require(msg.value >= JOIN_FEE, "Funding payment too low");
-        require(address(contractOwner) != address(0),"Contract owner is not set");
-        uint256 amountToReturn = msg.value - JOIN_FEE;
-        flightSuretyData.fund.value(JOIN_FEE)(msg.sender); // transfer payment on to data contract and flag as funded
-        msg.sender.transfer(amountToReturn);         // ..before crediting any overspend
+        require(address(contractOwner) != address(0), "Contract owner is not set");
+        // SafeMath
+        uint256 amountToReturn = msg.value.sub(JOIN_FEE);
+        // transfer payment on to data contract and flag as funded
+        flightSuretyData.fund.value(JOIN_FEE)(msg.sender);
+        // ..before crediting any overspend
+        msg.sender.transfer(amountToReturn);
+    }
+
+
+    ////////////////////////////////////////////////////////////////
+    // Passenger functions
+    ////////////////////////////////////////////////////////////////
+
+    // Passenger buys insurance for a flight
+    // Overpayment will result in a return
+    function buy(
+        address _airline,
+        string calldata _flight,
+        uint256 _timestamp)
+    external
+    payable
+    {
+        require(msg.value >= 0, "Payment must be greater than 0");
+        // Max payment is capped at 1 Ether
+        uint256 amountToReturn = (msg.value > 1 ether) ? (msg.value - 1 ether) : 0;
+        uint256 acceptedPayment = msg.value.sub(amountToReturn);
+        // transfer payment on to data contract
+        flightSuretyData.buy.value(acceptedPayment)(msg.sender, _airline, _flight, _timestamp);
+        // ..before crediting any overspend
+        msg.sender.transfer(amountToReturn);
     }
 
 
@@ -210,13 +237,16 @@ contract FlightSuretyApp {
      */
     function registerFlight
     (
+        string calldata _flight,
+        uint256 _timestamp
     )
     external
-    pure
-        //requireIsOperational
+    requireIsOperational
+    requireIsFundedAirline(msg.sender)
     {
-
+        flightSuretyData.registerFlight(msg.sender, _flight, _timestamp);
     }
+
 
     /**
      * @dev Called after oracle has updated flight status
@@ -434,6 +464,7 @@ contract FlightSuretyApp {
 }
 
 
+// API for the Data Contract
 contract FlightSuretyData {
     function isOperational()
     public
@@ -453,7 +484,7 @@ contract FlightSuretyData {
     function getAirlineStatus(address _airline)
     external
     view
-    returns ( bool isRegistered,
+    returns (bool isRegistered,
         bool isFunded,
         uint256 votes);
 
@@ -466,4 +497,19 @@ contract FlightSuretyData {
     (address airline)
     public
     payable;
+
+    function registerFlight(address _airline,
+        string calldata _flight,
+        uint256 _timestamp)
+    external;
+
+    function buy
+    (address passenger,
+        address _airline,
+        string calldata _flight,
+        uint256 _timestamp
+    )
+    external
+    payable;
+
 }

@@ -12,11 +12,16 @@ contract FlightSuretyData {
     address private contractOwner;                          // Account used to deploy contract
     bool private operational = true;                        // Blocks all state changes throughout the contract if false
 
+
+    struct Insurance {
+        bytes32 flightKey;
+        address passenger;
+        uint256 payment;
+    }
+
     struct Flight {
-        bool isRegistered;
-        uint8 statusCode;
-        uint256 updatedTimestamp;
         address airline;
+        uint256 departureTimestamp;
     }
 
 
@@ -29,10 +34,11 @@ contract FlightSuretyData {
     }
 
     Airline[] private airlines;
+    Insurance[] private insurance;                          // List of passenger insurance
 
     uint256 private constant SENTINEL = 9999999999; //2^250; // Used as a return value for "not found"
 
-    mapping(bytes32 => Flight) private flights;
+    mapping(bytes32 => Flight) private flights;   // keys (see getFlightKey) of flights belonging to airline
 
     mapping(address => bool) private authorizedAppContracts;
 
@@ -56,7 +62,7 @@ contract FlightSuretyData {
     {
         require(firstAirline != address(0), 'Must specify the first airline to register when deploying contract');
         contractOwner = msg.sender;
-        airlines.push(Airline({airlineAccount:firstAirline, isRegistered:true, isFunded:false, votes:0}));
+        airlines.push(Airline({airlineAccount : firstAirline, isRegistered : true, isFunded : false, votes : 0}));
     }
 
     /********************************************************************************************/
@@ -115,7 +121,7 @@ contract FlightSuretyData {
     }
 
 
-/********************************************************************************************/
+    /********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
@@ -188,7 +194,7 @@ contract FlightSuretyData {
     {
         uint256 idx = findAirline(_airline);
         if (idx != SENTINEL) {
-            return ! airlines[idx].voters[_voter];
+            return !airlines[idx].voters[_voter];
         }
         return true;
     }
@@ -205,7 +211,7 @@ contract FlightSuretyData {
     function getAirlineStatus(address _airline)
     external
     view
-    returns ( bool isRegistered,
+    returns (bool isRegistered,
         bool isFunded,
         uint256 votes)
     {
@@ -214,7 +220,7 @@ contract FlightSuretyData {
             Airline memory airline = airlines[idx];
             return (airline.isRegistered, airline.isFunded, airline.votes);
         }
-        return (false,false,0);
+        return (false, false, 0);
     }
 
     /***
@@ -244,7 +250,7 @@ contract FlightSuretyData {
         uint256 _registeredAirlines = registeredAirlinesCount();
         if (_registeredAirlines < 4) {
             // Votes are not necessary for initial airlines - setting to 0
-            airlines.push(Airline({airlineAccount:_airline, isRegistered:true, isFunded:false, votes:0}));
+            airlines.push(Airline({airlineAccount : _airline, isRegistered : true, isFunded : false, votes : 0}));
         } else {
             uint256 idx = findAirline(_airline);
             if (idx != SENTINEL) {
@@ -260,7 +266,7 @@ contract FlightSuretyData {
                 }
             } else {
                 // First request - Start with 1 vote and not yet registered
-                airlines.push(Airline({airlineAccount:_airline, isRegistered:false, isFunded:false, votes:1}));
+                airlines.push(Airline({airlineAccount : _airline, isRegistered : false, isFunded : false, votes : 1}));
                 // Record vote
                 idx = findAirline(_airline);
                 airlines[idx].voters[_voter] = true;
@@ -269,18 +275,46 @@ contract FlightSuretyData {
     }
 
 
+    // Add a flight schedule to an airline
+    function registerFlight(address _airline,
+        string calldata _flight,
+        uint256 _timestamp)
+    external
+    requireIsOperational
+    requireAuthorizedCaller
+    requireIsFundedAirline(_airline)
+    {
+        uint256 idx = findAirline(_airline);
+        bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
+        Flight memory flight;
+        flight.airline = _airline;
+        flight.departureTimestamp = _timestamp;
+        flights[flightKey] = flight;
+    }
+
+
     /**
      * @dev Buy insurance for a flight
      *
      */
     function buy
-    (
+    (   address passenger,
+        address _airline,
+        string calldata _flight,
+        uint256 _timestamp
     )
     external
     payable
+    requireIsOperational
     requireAuthorizedCaller
+    requireIsFundedAirline(_airline)
     {
-
+        uint256 idx = findAirline(_airline);
+        bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
+        Flight memory flight = flights[flightKey];
+        require(address(flight.airline) != address(0), 'Flight does not exist');
+        Insurance memory _insurance = Insurance({flightKey: flightKey, passenger:passenger, payment:msg.value} );
+        insurance.push(_insurance);
     }
 
     /**
@@ -325,7 +359,7 @@ contract FlightSuretyData {
         if (idx != SENTINEL) {
             airlines[idx].isFunded = true;
         }
-//        funded[airline] = true;
+        //        funded[airline] = true;
     }
 
     function getFlightKey
@@ -350,7 +384,7 @@ contract FlightSuretyData {
     payable
     requireAuthorizedCaller
     {
-//        fund();
+        //        fund();
     }
 
     /**
@@ -381,7 +415,8 @@ contract FlightSuretyData {
         if (idx != SENTINEL) {
             return airlines[idx].isFunded;
         }
-        return false; // Airline account doesn't exist
+        return false;
+        // Airline account doesn't exist
     }
 
 }
