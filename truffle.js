@@ -51,7 +51,7 @@ module.exports = {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
-      gas: 5500000,        // Ropsten has a lower block limit than mainnet
+      gas: 5500000,
       websockets: true
       // confirmations: 2,    // # of confs to wait between deployments. (default: 0)
       // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)

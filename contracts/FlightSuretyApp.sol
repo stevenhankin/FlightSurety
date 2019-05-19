@@ -28,7 +28,7 @@ contract FlightSuretyApp {
     address private contractOwner;          // Account used to deploy contract
 
     FlightSuretyData  flightSuretyData ; // App links to the Data Contract
-    address payable private  flightSuretyDataAddress; // Need payable address to the data contract to transfer ether
+//    address payable private  flightSuretyDataAddress; // Need payable address to the data contract to transfer ether
 
     uint256 private constant JOIN_FEE = 10 ether; // Fee for an airline to join
 
@@ -93,11 +93,12 @@ contract FlightSuretyApp {
     (address dataContractAddress)
     public
     {
+        require(dataContractAddress != address (0), 'Must supply the data contract associated with the app');
         contractOwner = msg.sender;
         // Link to the deployed data contract
         // and get address for payments to it
         flightSuretyData = FlightSuretyData(dataContractAddress);
-        flightSuretyDataAddress = address(uint160(address(flightSuretyData)));
+//        flightSuretyDataAddress = address(uint160(address(flightSuretyData)));
     }
 
     /********************************************************************************************/
@@ -119,6 +120,22 @@ contract FlightSuretyApp {
     returns (bool)
     {
         return flightSuretyData.isFundedAirline(airline);
+    }
+
+    function getDataContractAddress()
+    public
+    view
+    returns (address)
+    {
+        return address(flightSuretyData);
+    }
+
+    function getContractOwner()
+    public
+    view
+    returns (address)
+    {
+        return address(contractOwner);
     }
 
     /********************************************************************************************/
@@ -162,9 +179,11 @@ contract FlightSuretyApp {
      */
     function fund()
     external payable
+    requireIsOperational
     requireIsNotFundedAirline(msg.sender) // Must be not funded otherwise will be overpaying with multiple funds
     {
         require(msg.value >= JOIN_FEE, "Funding payment too low");
+        require(address(contractOwner) != address(0),"Contract owner is not set");
         uint256 amountToReturn = msg.value - JOIN_FEE;
         flightSuretyData.fund.value(JOIN_FEE)(msg.sender); // transfer payment on to data contract and flag as funded
         msg.sender.transfer(amountToReturn);         // ..before crediting any overspend
@@ -415,8 +434,7 @@ contract FlightSuretyData {
     function registerAirline
     (address airline
     )
-    external
-    returns (bool success, uint256 votes);
+    external;
 
     function registeredAirlinesCount()
     public
