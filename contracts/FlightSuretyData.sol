@@ -374,12 +374,14 @@ contract FlightSuretyData {
      *
     */
     function pay
-    (
+    (address payable passenger
     )
     external
-    view
     requireAuthorizedCaller
     {
+        uint256 amount = passengerCredit[passenger];
+        passengerCredit[passenger] = 0;
+        passenger.transfer(amount);
     }
 
     /**
@@ -423,7 +425,7 @@ contract FlightSuretyData {
     payable
     requireAuthorizedCaller
     {
-        //        fund();
+//                fund();
     }
 
     /**

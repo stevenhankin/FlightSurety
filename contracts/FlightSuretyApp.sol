@@ -231,6 +231,14 @@ contract FlightSuretyApp {
     }
 
 
+    // Transfers eligible payout funds to insuree
+    function pay()
+    external
+    {
+        flightSuretyData.pay(msg.sender);
+    }
+
+
     /**
      * @dev Register a future flight for insuring.
      *
@@ -518,6 +526,11 @@ contract FlightSuretyData {
         string calldata flight,
         uint256 timestamp,
         uint8 statusCode
+    )
+    external;
+
+    function pay
+    (address payable passenger
     )
     external;
 }

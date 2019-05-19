@@ -381,10 +381,33 @@ contract('Flight Surety Tests', async (accounts) => {
             console.error("Ooops - unexpected error!", {e})
         }
 
-
         // ASSERT
         assert.equal(reverted, false, "A passenger should be credited if an airline causes a delay");
         assert.equal(totalCredit, 1.5, "Passenger should receive 1.5 Ether for a 1 Ether insurance");
     });
+
+
+    it('(Passenger Withdraw) receive funds owed as a result of receiving credit for insurance payout', async () => {
+        // ARRANGE
+        let reverted = false;
+        let totalCreditEth;
+        const before = web3.utils.fromWei(await web3.eth.getBalance(passenger),'ether');;
+
+        // ACT
+        try {
+            // "passenger was Credited in a previous test case"
+            await config.flightSuretyApp.pay({from: passenger});
+            const after = web3.utils.fromWei(await web3.eth.getBalance(passenger),'ether');;
+            totalCreditEth = after - before;
+        } catch (e) {
+            reverted = true;
+            console.error("Ooops - unexpected error!", {e})
+        }
+
+        // ASSERT
+        assert.equal(reverted, false, "A passenger should be credited if an airline causes a delay");
+        assert.isBelow(1.5 - totalCreditEth, 0.01, "Passenger should receive almost 1.5 Ether for a 1 Ether insurance (minus gas costs)");
+    });
+
 
 });
