@@ -21,12 +21,11 @@ contract FlightSuretyData {
 
 
     struct Airline {
-//        bool isRegistered;
-//        uint8 statusCode;
-//        uint256 updatedTimestamp;
         address airlineAccount;
+        bool isRegistered;
         bool isFunded;
-
+        uint256 votes;
+        mapping(address => bool) voters;            // keep track of airlines that have already voted
     }
 
     Airline[] private airlines;
@@ -36,10 +35,6 @@ contract FlightSuretyData {
     mapping(bytes32 => Flight) private flights;
 
     mapping(address => bool) private authorizedAppContracts;
-//    mapping(address => bool) private funded;                  // maps an airline to true when funded
-
-
-    address  private  firstOne; // TODO: DELETE THIS!
 
     uint256 private constant JOIN_FEE = 10 ether; // Fee for an airline to join
 
@@ -60,10 +55,8 @@ contract FlightSuretyData {
     public
     {
         require(firstAirline != address(0), 'Must specify the first airline to register when deploying contract');
-        firstOne = firstAirline;
         contractOwner = msg.sender;
-//        Airline airline = new Airline({airlineAccount:firstAirline, funded:false});
-        airlines.push(Airline({airlineAccount:firstAirline, isFunded:false}));
+        airlines.push(Airline({airlineAccount:firstAirline, isRegistered:true, isFunded:false, votes:0}));
     }
 
     /********************************************************************************************/
@@ -113,7 +106,16 @@ contract FlightSuretyData {
         _;
     }
 
-    /********************************************************************************************/
+    // A voter can only raise one registration vote
+    // for a given airline
+    modifier requireNotAlreadyVoted(address _airline, address _voter)
+    {
+        require(hasNotAlreadyVoted(_airline, _voter), "A registered airline cannot vote more than once for same airline");
+        _;
+    }
+
+
+/********************************************************************************************/
     /*                                       UTILITY FUNCTIONS                                  */
     /********************************************************************************************/
 
@@ -177,9 +179,43 @@ contract FlightSuretyData {
     }
 
 
+    // True if the Voter has not already raise
+    // a registration vote for airline
+    function hasNotAlreadyVoted(address _airline, address _voter)
+    internal
+    view
+    returns (bool)
+    {
+        uint256 idx = findAirline(_airline);
+        if (idx != SENTINEL) {
+            return ! airlines[idx].voters[_voter];
+        }
+        return true;
+    }
+
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
+
+
+
+    // Useful to check how close an airline is to being registered
+    // based on number of votes
+    function getAirlineStatus(address _airline)
+    external
+    view
+    returns ( bool isRegistered,
+        bool isFunded,
+        uint256 votes)
+    {
+        uint256 idx = findAirline(_airline);
+        if (idx != SENTINEL) {
+            Airline memory airline = airlines[idx];
+            return (airline.isRegistered, airline.isFunded, airline.votes);
+        }
+        return (false,false,0);
+    }
 
     /***
      * @dev Return number of airlines registered so far
@@ -198,19 +234,37 @@ contract FlightSuretyData {
      *
      */
     function registerAirline
-    (address airlineAccount
+    (address _airline, address _voter
     )
     external
     requireAuthorizedCaller
     requireIsOperational
+    requireNotAlreadyVoted(_airline, _voter)
     {
-        if (registeredAirlinesCount() <= 4) {
-            airlines.push(Airline({airlineAccount:airlineAccount, isFunded:false}));
+        uint256 _registeredAirlines = registeredAirlinesCount();
+        if (_registeredAirlines < 4) {
+            // Votes are not necessary for initial airlines - setting to 0
+            airlines.push(Airline({airlineAccount:_airline, isRegistered:true, isFunded:false, votes:0}));
         } else {
-            bool y = true;
-            revert('Not yet implemented registerAirline for 4 or more accounts');
-//            success = false;
-//            votes = 0;
+            uint256 idx = findAirline(_airline);
+            if (idx != SENTINEL) {
+                // Airline has had at least one registration request
+                // Incrementing by 1 vote..
+                airlines[idx].votes++;
+                // Record vote
+                airlines[idx].voters[_voter] = true;
+                // Once 50% membership votes for this airline, it will be registered
+                uint256 _count50pct = _registeredAirlines.div(2);
+                if (airlines[idx].votes >= _count50pct) {
+                    airlines[idx].isRegistered = true;
+                }
+            } else {
+                // First request - Start with 1 vote and not yet registered
+                airlines.push(Airline({airlineAccount:_airline, isRegistered:false, isFunded:false, votes:1}));
+                // Record vote
+                idx = findAirline(_airline);
+                airlines[idx].voters[_voter] = true;
+            }
         }
     }
 
@@ -307,25 +361,11 @@ contract FlightSuretyData {
     view
     returns (bool)
     {
-
-
         uint256 idx = findAirline(_airline);
         if (idx != SENTINEL) {
             return true;
         }
         return false;
-
-//        // Loop through airline until found or end
-//        uint8 i = 0;
-//        bool addrIsAirline = false;
-//        uint16 airlineCount = airlines.length;
-//        while (i < airlineCount && !addrIsAirline) {
-//            if (airlines[i].airlineAccount == _airline) {
-//                addrIsAirline = true;
-//            }
-//            i++;
-//        }
-//        return addrIsAirline;
     }
 
 
@@ -341,15 +381,6 @@ contract FlightSuretyData {
         if (idx != SENTINEL) {
             return airlines[idx].isFunded;
         }
-//        // Loop through airline until found or end
-//        uint8 i = 0;
-//        bool isFunded = false;
-//        while (i < airlines.length && !addrIsAirline) {
-//            if (airlines[i].airlineAccount == _airline) {
-//                return airlines[i].isFunded;
-//            }
-//            i++;
-//        }
         return false; // Airline account doesn't exist
     }
 

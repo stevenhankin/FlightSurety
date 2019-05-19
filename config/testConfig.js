@@ -35,7 +35,7 @@ var Config = async function(accounts) {
         flightSuretyApp: flightSuretyApp
     };
 
-    console.log('CONFIG:',{config})
+    // console.log('CONFIG:',{config})
 
     return config;
 };

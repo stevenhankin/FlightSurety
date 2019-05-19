@@ -138,9 +138,23 @@ contract FlightSuretyApp {
         return address(contractOwner);
     }
 
+
+
+
     /********************************************************************************************/
     /*                                     SMART CONTRACT FUNCTIONS                             */
     /********************************************************************************************/
+
+    function getAirlineStatus(address airline)
+    public
+    view
+    returns ( bool isRegistered,
+        bool isFunded,
+        uint256 votes)
+    {
+        return flightSuretyData.getAirlineStatus(airline);
+    }
+
 
     /***
      * @dev Return number of airlines registered so far
@@ -169,7 +183,7 @@ contract FlightSuretyApp {
     requireIsFundedAirline(msg.sender) // the SENDER needs to be a funded airline
     {
         // Only called once for a given airline for first 4
-        flightSuretyData.registerAirline(airline);
+        flightSuretyData.registerAirline(airline,msg.sender);
     }
 
     /**
@@ -432,9 +446,16 @@ contract FlightSuretyData {
     returns (bool);
 
     function registerAirline
-    (address airline
+    (address airline, address voter
     )
     external;
+
+    function getAirlineStatus(address _airline)
+    external
+    view
+    returns ( bool isRegistered,
+        bool isFunded,
+        uint256 votes);
 
     function registeredAirlinesCount()
     public

@@ -34,7 +34,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it(`(multiparty) has correct initial isOperational() value`, async function () {
 
-        
+
         // Get operating status
         let status = await config.flightSuretyData.isOperational.call();
         assert.equal(status, true, "Incorrect initial operating status value");
@@ -44,7 +44,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it(`(multiparty) can block access to setOperatingStatus() for non-Contract Owner account`, async function () {
 
-        
+
         // Ensure that access is denied for non-Contract Owner account
         let accessDenied = false;
         try {
@@ -59,7 +59,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it(`(multiparty) can allow access to setOperatingStatus() for Contract Owner account`, async function () {
 
-        
+
         // Ensure that access is allowed for Contract Owner account
         let accessDenied = false;
         try {
@@ -72,7 +72,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
 
     it(`(multiparty) can block access to functions using requireIsOperational when operating status is false`, async function () {
-        
+
 
         await config.flightSuretyData.setOperatingStatus(false);
 
@@ -147,7 +147,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
 
     it('(airline) cannot be funded twice', async () => {
-        
+
         // ARRANGE
         const tenEth = web3.utils.toWei("10");
         let reverted = false;
@@ -208,45 +208,118 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
-
-    it('(airline) can request to register fifth airline, but will not initially succeed', async () => {
+    it('(airline) can request to register fifth airline, but will not initially succeed (minimum votes required)', async () => {
         // ARRANGE
         let result = {};
-        // NOTE: Airline 1 is already funded from previous step
+        const num = await config.flightSuretyApp.registeredAirlinesCount();
+        assert.equal(num.toNumber(), 4, 'At this point there should be 4 registered airlines (from previous steps)');
         const airline5 = accounts[5];
 
         // ACT
         try {
-            result = await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            result = await config.flightSuretyApp.getAirlineStatus(airline5);
         } catch (e) {
             console.error("Ooops - unexpected error!", {e})
         }
 
         // ASSERT
-        assert.equal(result.success, false, "When registering the fifth airline, it should not succeed until minimum votes reached");
-        assert.equal(result.votes, 1, "When registering the fifth airline, a single vote should be returned");
+        assert.equal(result.votes.toNumber(), 1, "When registering the fifth airline, a single vote should be returned");
+        assert.equal(result.isRegistered, false, "Should not register until minimum votes reached");
     });
 
-/*
-        it('(airline) CAN register an Airline using registerAirline() if it IS FUNDED', async () => {
 
-            // ARRANGE
-            let newAirline = accounts[2];
-            const tenEth = web3.utils.toWei("79");
-            await config.flightSuretyApp.fund({from: config.firstAirline, value: tenEth});
+    it('(airline) cannot repeatedly have vote counted for same airline', async () => {
+        // ARRANGE
+        let result = {};
+        const airline5 = accounts[5];
+        let reverted = false;
 
-            // ACT
-            try {
-                await config.flightSuretyApp.registerAirline(config.firstAirline, {from: config.firstAirline});
-            } catch (e) {
+        // ACT
+        try {
+            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            result = await config.flightSuretyApp.getAirlineStatus(airline5);
+        } catch (e) {
+            reverted = true;
+        }
 
-            }
-            let result = await config.flightSuretyData.isAirline.call(newAirline);
+        // ASSERT
+        assert.equal(reverted, true, "A given airline can only raise one vote for a new airline");
+    });
 
-            // ASSERT
-            assert.equal(result, true, "Airline should be able to register another airline if it has provided funding");
 
-        });
-    */
+    it('(airline) cannot repeatedly have vote counted for same airline', async () => {
+        // ARRANGE
+        let result = {};
+        const airline5 = accounts[5];
+        let reverted = false;
+
+        result = await config.flightSuretyApp.getAirlineStatus(airline5);
+        const initialVote = result.votes.toNumber();
+
+        // ACT
+        try {
+            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+        } catch (e) {
+            reverted = true;
+        }
+
+        result = await config.flightSuretyApp.getAirlineStatus(airline5);
+        const endVote = result.votes.toNumber();
+
+        // ASSERT
+        assert.equal(reverted, true, "A given airline can only raise one vote for a new airline");
+        assert.equal(initialVote, endVote, "Voting multiple times for a new airline should not change vote count");
+    });
+
+
+    it('(airline) can register a fifth airline if it has not yet voted (2 of 4 votes) ', async () => {
+        // ARRANGE
+        let result = {};
+        const airline5 = accounts[5];
+        const tenEth = web3.utils.toWei("10");
+
+        // ACT
+        try {
+            // Fund airline 2..
+            await config.flightSuretyApp.fund({from: accounts[2], value: tenEth});
+            // ..before attempting to register another airline
+            await config.flightSuretyApp.registerAirline(airline5, {from: accounts[2]});
+            result = await config.flightSuretyApp.getAirlineStatus(airline5);
+        } catch (e) {
+            console.error("Ooops - unexpected error!", {e})
+        }
+
+        // ASSERT
+        assert.equal(result.votes.toNumber(), 2, "Vote by a 2nd airline should be recognized as a 2nd vote");
+        assert.equal(result.isRegistered, true, "2 of 4 consensus should result in registration");
+    });
+
+
+    /*
+            it('(airline) CAN register an Airline using registerAirline() if it IS FUNDED', async () => {
+
+                // ARRANGE
+                let newAirline = accounts[2];
+                const tenEth = web3.utils.toWei("79");
+                await config.flightSuretyApp.fund({from: config.firstAirline, value: tenEth});
+
+                // ACT
+                try {
+                    await config.flightSuretyApp.registerAirline(config.firstAirline, {from: config.firstAirline});
+                } catch (e) {
+
+                }
+                let result = await config.flightSuretyData.isAirline.call(newAirline);
+
+                // ASSERT
+                assert.equal(result, true, "Airline should be able to register another airline if it has provided funding");
+
+            });
+        */
 
 });
