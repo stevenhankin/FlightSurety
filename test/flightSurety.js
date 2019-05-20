@@ -1,11 +1,11 @@
 var Test = require('../config/testConfig.js');
 var BigNumber = require('bignumber.js');
+require('truffle-test-utils').init();
 
 // Arbitrary constants for testing
 const FLIGHT_NAME = "BA101";
 const FLIGHT_TIMESTAMP = parseInt(Date.now() + 100000 +  Math.random() * 100000, 10);
 const ONE_ETHER = web3.utils.toWei("1");
-const TWO_ETHER = web3.utils.toWei("2");
 const THREE_ETHER = web3.utils.toWei("3");
 const NINE_ETHER = web3.utils.toWei("9");
 const TEN_ETHER = web3.utils.toWei("10");
@@ -15,6 +15,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     const passenger = accounts[8];
     const airline5 = accounts[5];
+    const oracle = accounts[9];
 
 
     var config;
@@ -407,6 +408,50 @@ contract('Flight Surety Tests', async (accounts) => {
         // ASSERT
         assert.equal(reverted, false, "A passenger should be credited if an airline causes a delay");
         assert.isBelow(1.5 - totalCreditEth, 0.01, "Passenger should receive almost 1.5 Ether for a 1 Ether insurance (minus gas costs)");
+    });
+
+
+    it('(Oracle) an oracle should be able to register if fund requirements are met', async () => {
+        // ARRANGE
+        let reverted = false;
+        // ACT
+        try {
+            // Supply minimum funding requirement
+            await config.flightSuretyApp.registerOracle({from: oracle, value:ONE_ETHER});
+        } catch (e) {
+            reverted = true;
+            console.error("Ooops - unexpected error!", {e})
+        }
+        // ASSERT
+        assert.equal(reverted, false, "An oracle should be able to register if fund requirements are met without error");
+    });
+
+    
+    it('(Oracle) flight status requests result in OracleRequest event emitted by Smart Contract', async () => {
+        // ARRANGE
+        let reverted = false;
+
+        // ACT
+        try {
+            // Supply minimum funding requirement
+            await config.flightSuretyApp.fetchFlightStatus
+            (
+                 airline5,
+                 FLIGHT_NAME,
+                 FLIGHT_TIMESTAMP);
+
+            const ev = await config.flightSuretyData.getPastEvents();
+            const {airline,flight} = ev[0].args;
+
+            // ASSERT
+            assert.equal(airline, airline5, "Event should emit matching airline address");
+            assert.equal(flight, FLIGHT_NAME, "Event should emit matching airline address");
+
+        } catch (e) {
+            reverted = true;
+            console.error("Ooops - unexpected error!", {e})
+        }
+        assert.equal(reverted, false, "Flight status requests should not cause error");
     });
 
 

@@ -277,13 +277,11 @@ contract FlightSuretyApp {
 
     // region ORACLE MANAGEMENT
 
-
     // Fee to be paid when registering oracle
     uint256 public constant REGISTRATION_FEE = 1 ether;
 
     // Number of oracles that must respond for valid status
     uint256 private constant MIN_RESPONSES = 3;
-
 
 
     // Register an oracle with the contract
@@ -296,7 +294,6 @@ contract FlightSuretyApp {
     {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
-
         flightSuretyData.registerOracle.value(msg.value)(msg.sender);
     }
 
@@ -315,33 +312,22 @@ contract FlightSuretyApp {
     }
 
 
+    // Called by oracle when a response is available to an outstanding request
+    // For the response to be accepted, there must be a pending request that is open
+    // and matches one of the three Indexes randomly assigned to the oracle at the
+    // time of registration (i.e. uninvited oracles are not welcome)
     function submitOracleResponse
     (
         uint8 index,
         address airline,
         string calldata flight,
         uint256 timestamp,
-        uint8 statusCode,
-        uint256 min_responses
+        uint8 statusCode
     )
     external
     requireIsOperational
     {
         flightSuretyData.submitOracleResponse(index, airline, flight, timestamp, statusCode, MIN_RESPONSES);
-    }
-
-
-    function getFlightKey
-    (
-        address airline,
-        string memory flight,
-        uint256 timestamp
-    )
-    pure
-    internal
-    returns (bytes32)
-    {
-        return keccak256(abi.encodePacked(airline, flight, timestamp));
     }
 
 
