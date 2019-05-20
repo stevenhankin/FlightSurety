@@ -41,7 +41,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it(`(Airline Contract Initialization) First airline is registered when contract is deployed`, async function () {
         const num = await config.flightSuretyApp.registeredAirlinesCount();
-        const result = await config.flightSuretyData.getAirlineStatus(config.firstAirline);
+        const result = await config.flightSuretyApp.getAirlineStatus(config.firstAirline);
         assert.equal(num.toNumber(), 1, 'Exactly one airline should be registered');
         assert.equal(result.isRegistered, true, 'The first airline is registered');
     });
