@@ -1,6 +1,4 @@
 var Test = require('../config/testConfig.js');
-var BigNumber = require('bignumber.js');
-require('truffle-test-utils').init();
 
 // Arbitrary constants for testing
 const FLIGHT_NAME = "BA101";
@@ -426,7 +424,7 @@ contract('Flight Surety Tests', async (accounts) => {
         assert.equal(reverted, false, "An oracle should be able to register if fund requirements are met without error");
     });
 
-    
+
     it('(Oracle) flight status requests result in OracleRequest event emitted by Smart Contract', async () => {
         // ARRANGE
         let reverted = false;
