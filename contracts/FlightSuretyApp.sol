@@ -301,6 +301,20 @@ contract FlightSuretyApp {
     }
 
 
+    // Generate a request for oracles to fetch flight information
+    function fetchFlightStatus
+    (
+        address airline,
+        string calldata flight,
+        uint256 timestamp
+    )
+    requireIsOperational
+    external
+    {
+        flightSuretyData.fetchFlightStatus(airline, flight, timestamp);
+    }
+
+
     function submitOracleResponse
     (
         uint8 index,
@@ -411,6 +425,14 @@ contract FlightSuretyData {
     )
     external
     payable;
+
+    function fetchFlightStatus
+    (
+        address airline,
+        string calldata flight,
+        uint256 timestamp
+    )
+    external;
 
     function submitOracleResponse
     (
