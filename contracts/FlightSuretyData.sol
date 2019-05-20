@@ -9,9 +9,6 @@ contract FlightSuretyData {
     /*                                       DATA VARIABLES                                     */
     /********************************************************************************************/
 
-    uint8 private constant STATUS_CODE_LATE_AIRLINE = 20;
-
-
     address private contractOwner;                          // Account used to deploy contract
     bool private operational = true;                        // Blocks all state changes throughout the contract if false
 
@@ -329,10 +326,13 @@ contract FlightSuretyData {
     */
     function creditInsurees
     (
-        bytes32 delayedFlightKey
+        address airline,
+        string calldata flight,
+        uint256 timestamp
     )
-    internal
+    external
     {
+        bytes32 delayedFlightKey = getFlightKey(airline, flight, timestamp);
         uint256 i = 0;
         uint256 totalRecords = insurance.length;
         while (i < totalRecords) {
@@ -363,9 +363,6 @@ contract FlightSuretyData {
     {
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         flights[flightKey].statusCode = statusCode;
-        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
-            creditInsurees(flightKey);
-        }
     }
 
 

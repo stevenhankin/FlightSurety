@@ -263,13 +263,17 @@ contract FlightSuretyApp {
     function processFlightStatus
     (
         address airline,
-        string memory flight,
+        string calldata flight,
         uint256 timestamp,
         uint8 statusCode
     )
-    internal
+    external
+    requireIsOperational
     {
         flightSuretyData.processFlightStatus(airline,flight,timestamp,statusCode);
+        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
+            flightSuretyData.creditInsurees(airline,flight,timestamp);
+        }
     }
 
 
@@ -404,7 +408,7 @@ contract FlightSuretyApp {
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
             // Handle flight status as appropriate
-            processFlightStatus(airline, flight, timestamp, statusCode);
+            this.processFlightStatus(airline, flight, timestamp, statusCode);
         }
     }
 
@@ -526,6 +530,14 @@ contract FlightSuretyData {
         string calldata flight,
         uint256 timestamp,
         uint8 statusCode
+    )
+    external;
+
+    function creditInsurees
+    (
+        address airline,
+        string calldata flight,
+        uint256 timestamp
     )
     external;
 

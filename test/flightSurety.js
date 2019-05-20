@@ -369,7 +369,7 @@ contract('Flight Surety Tests', async (accounts) => {
         let totalCredit = 0;
         // Set status to Delayed to trigger credit
         const STATUS_CODE_LATE_AIRLINE = 20;
-        await config.flightSuretyData.processFlightStatus(airline5, FLIGHT_NAME, FLIGHT_TIMESTAMP, STATUS_CODE_LATE_AIRLINE, {from: config.owner});
+        await config.flightSuretyApp.processFlightStatus(airline5, FLIGHT_NAME, FLIGHT_TIMESTAMP, STATUS_CODE_LATE_AIRLINE, {from: config.owner});
 
         // ACT
         try {
