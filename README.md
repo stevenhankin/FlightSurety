@@ -14,6 +14,11 @@ truffle compile
 
 ## Develop Client
 
+Start Ganache using prepared mnemonic (to ensure accounts align)
+```
+ganache-cli -a 50 -m "quote ensure arrive vote dinosaur illegal wood equal disagree teach tray planet"
+```
+
 To run truffle tests:
 ```shell
 truffle test ./test/flightSurety.js
@@ -56,3 +61,4 @@ Deploy the contents of the ./dapp folder
 * [Solidity Language Reference](http://solidity.readthedocs.io/en/v0.4.24/)
 * [Ethereum Blockchain Explorer](https://etherscan.io/)
 * [Web3Js Reference](https://github.com/ethereum/wiki/wiki/JavaScript-API)
+

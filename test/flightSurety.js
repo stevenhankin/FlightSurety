@@ -409,48 +409,4 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
-    it('(Oracle) an oracle should be able to register if fund requirements are met', async () => {
-        // ARRANGE
-        let reverted = false;
-        // ACT
-        try {
-            // Supply minimum funding requirement
-            await config.flightSuretyApp.registerOracle({from: oracle, value:ONE_ETHER});
-        } catch (e) {
-            reverted = true;
-            console.error("Ooops - unexpected error!", {e})
-        }
-        // ASSERT
-        assert.equal(reverted, false, "An oracle should be able to register if fund requirements are met without error");
-    });
-
-
-    it('(Oracle) flight status requests result in OracleRequest event emitted by Smart Contract', async () => {
-        // ARRANGE
-        let reverted = false;
-
-        // ACT
-        try {
-            // Supply minimum funding requirement
-            await config.flightSuretyApp.fetchFlightStatus
-            (
-                 airline5,
-                 FLIGHT_NAME,
-                 FLIGHT_TIMESTAMP);
-
-            const ev = await config.flightSuretyData.getPastEvents();
-            const {airline,flight} = ev[0].args;
-
-            // ASSERT
-            assert.equal(airline, airline5, "Event should emit matching airline address");
-            assert.equal(flight, FLIGHT_NAME, "Event should emit matching airline address");
-
-        } catch (e) {
-            reverted = true;
-            console.error("Ooops - unexpected error!", {e})
-        }
-        assert.equal(reverted, false, "Flight status requests should not cause error");
-    });
-
-
 });

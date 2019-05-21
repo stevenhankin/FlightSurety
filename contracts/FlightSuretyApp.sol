@@ -24,12 +24,20 @@ contract FlightSuretyApp {
     uint8 private constant STATUS_CODE_LATE_TECHNICAL = 40;
     uint8 private constant STATUS_CODE_LATE_OTHER = 50;
 
-    address private contractOwner;          // Account used to deploy contract
+    // Account used to deploy contract
+    address private contractOwner;
 
-    FlightSuretyData  flightSuretyData; // App links to the Data Contract
+    // App links to the Data Contract
+    FlightSuretyData  flightSuretyData;
 
-    uint256 private constant JOIN_FEE = 10 ether; // Fee for an airline to join
+    // Fee for an airline to join
+    uint256 private constant JOIN_FEE = 10 ether;
 
+    // Fee to be paid when registering oracle
+    uint256 public constant REGISTRATION_FEE = 1 ether;
+
+    // Number of oracles that must respond for valid status
+    uint256 private constant MIN_RESPONSES = 3;
 
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
@@ -96,7 +104,6 @@ contract FlightSuretyApp {
         // Link to the deployed data contract
         // and get address for payments to it
         flightSuretyData = FlightSuretyData(dataContractAddress);
-        //        flightSuretyDataAddress = address(uint160(address(flightSuretyData)));
     }
 
     /********************************************************************************************/
@@ -134,6 +141,14 @@ contract FlightSuretyApp {
     returns (address)
     {
         return address(contractOwner);
+    }
+
+    function getRegistrationFee()
+    public
+    pure
+    returns (uint256)
+    {
+        return REGISTRATION_FEE;
     }
 
 
@@ -277,11 +292,6 @@ contract FlightSuretyApp {
 
     // region ORACLE MANAGEMENT
 
-    // Fee to be paid when registering oracle
-    uint256 public constant REGISTRATION_FEE = 1 ether;
-
-    // Number of oracles that must respond for valid status
-    uint256 private constant MIN_RESPONSES = 3;
 
 
     // Register an oracle with the contract
@@ -294,7 +304,13 @@ contract FlightSuretyApp {
     {
         // Require registration fee
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
-        flightSuretyData.registerOracle.value(msg.value)(msg.sender);
+
+        // SafeMath : determine any excess to return
+        uint256 amountToReturn = 0; //msg.value.sub(REGISTRATION_FEE);
+        // transfer payment on to data contract and flag as funded
+        flightSuretyData.registerOracle.value(REGISTRATION_FEE)(msg.sender);
+        // ..before crediting any overspend
+        msg.sender.transfer(amountToReturn);
     }
 
 
@@ -308,7 +324,7 @@ contract FlightSuretyApp {
     requireIsOperational
     external
     {
-        flightSuretyData.fetchFlightStatus(airline, flight, timestamp);
+        flightSuretyData.fetchFlightStatus(airline, flight, timestamp, msg.sender);
     }
 
 
@@ -327,9 +343,19 @@ contract FlightSuretyApp {
     external
     requireIsOperational
     {
-        flightSuretyData.submitOracleResponse(index, airline, flight, timestamp, statusCode, MIN_RESPONSES);
+        flightSuretyData.submitOracleResponse(index, airline, flight, timestamp, statusCode, MIN_RESPONSES, msg.sender);
     }
 
+
+    function getMyIndexes
+    (
+    )
+    view
+    public
+    returns (uint8[3] memory)
+    {
+        return flightSuretyData.getMyIndexes(msg.sender);
+    }
 
     // endregion
 
@@ -416,7 +442,8 @@ contract FlightSuretyData {
     (
         address airline,
         string calldata flight,
-        uint256 timestamp
+        uint256 timestamp,
+        address passenderAddr
     )
     external;
 
@@ -427,7 +454,15 @@ contract FlightSuretyData {
         string calldata flight,
         uint256 timestamp,
         uint8 statusCode,
-        uint256 min_responses
+        uint256 min_responses,
+        address oracleAddr
     )
     external;
+
+    function getMyIndexes
+    (address oracleAddr
+    )
+    view
+    public
+    returns (uint8[3] memory);
 }

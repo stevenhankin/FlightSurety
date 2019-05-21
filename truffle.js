@@ -25,8 +25,10 @@
 const infuraKey = "6f9c0594cb0c40298183228dcdcf4e2c"; // Set this to YOUR Infura Key
 
 const HDWalletProvider = require('truffle-hdwallet-provider');
-const fs = require('fs');
-const mnemonic = fs.readFileSync(".secret").toString().trim();
+// const fs = require('fs');
+// const mnemonic = fs.readFileSync(".secret").toString().trim();
+// const mnemonic = 'quote ensure arrive vote dinosaur illegal wood equal disagree teach tray planet';
+
 module.exports = {
   /**
    * Networks define how you connect to your ethereum client and let you set the
@@ -51,9 +53,9 @@ module.exports = {
       host: "127.0.0.1",     // Localhost (default: none)
       port: 8545,            // Standard Ethereum port (default: none)
       network_id: "*",       // Any network (default: none)
-      gas: 5500000,
-      websockets: true
-      // confirmations: 2,    // # of confs to wait between deployments. (default: 0)
+      // gas: 5500000,
+      websockets: true,
+      // confirmations: 1,    // # of confs to wait between deployments. (default: 0)
       // timeoutBlocks: 200,  // # of blocks before a deployment times out  (minimum/default: 50)
       // skipDryRun: true     // Skip dry run before migrations? (default: false for public nets )
     },

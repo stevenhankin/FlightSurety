@@ -512,18 +512,19 @@ contract FlightSuretyData {
     (
         address airline,
         string calldata flight,
-        uint256 timestamp
+        uint256 timestamp,
+        address passenderAddr
     )
     requireAuthorizedCaller
     requireIsOperational
     external
     {
-        uint8 index = getRandomIndex(msg.sender);
+        uint8 index = getRandomIndex(passenderAddr);
 
         // Generate a unique key for storing the request
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         oracleResponses[key] = ResponseInfo({
-            requester : msg.sender,
+            requester : passenderAddr,
             isOpen : true
             });
 
@@ -537,27 +538,30 @@ contract FlightSuretyData {
     )
     external
     payable
-    requireAuthorizedCaller
     requireIsOperational
+    requireAuthorizedCaller
     {
         uint8[3] memory indexes = generateIndexes(oracleAddr);
 
-        oracles[oracleAddr] = Oracle({
+        Oracle memory newOracle = Oracle({
             isRegistered : true,
             indexes : indexes
             });
+
+        oracles[oracleAddr] = newOracle;
+
     }
 
     function getMyIndexes
-    (
+    (address oracleAddr
     )
     view
-    internal
+    public
     returns (uint8[3] memory)
     {
-        require(oracles[msg.sender].isRegistered, "Not registered as an oracle");
+        require(oracles[oracleAddr].isRegistered, "Not registered as an oracle");
 
-        return oracles[msg.sender].indexes;
+        return oracles[oracleAddr].indexes;
     }
 
 
@@ -572,19 +576,19 @@ contract FlightSuretyData {
         string calldata flight,
         uint256 timestamp,
         uint8 statusCode,
-        uint256 min_responses
+        uint256 min_responses,
+        address oracleAddr
     )
     external
     requireIsOperational
     requireAuthorizedCaller
     {
-        require((oracles[msg.sender].indexes[0] == index) || (oracles[msg.sender].indexes[1] == index) || (oracles[msg.sender].indexes[2] == index), "Index does not match oracle request");
-
+        require((oracles[oracleAddr].indexes[0] == index) || (oracles[oracleAddr].indexes[1] == index) || (oracles[oracleAddr].indexes[2] == index), "Index does not match oracle request");
 
         bytes32 key = keccak256(abi.encodePacked(index, airline, flight, timestamp));
         require(oracleResponses[key].isOpen, "Flight or timestamp do not match oracle request");
 
-        oracleResponses[key].responses[statusCode].push(msg.sender);
+        oracleResponses[key].responses[statusCode].push(oracleAddr);
 
         // Information isn't considered verified until at least MIN_RESPONSES
         // oracles respond with the *** same *** information
