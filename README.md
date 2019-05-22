@@ -17,6 +17,7 @@ truffle compile
 ## Run Tests
 This requires running two components in two shells
 The first is a local Ethereum node (using Ganache) whilst running the tests
+
 **In shell #1 start Ganache:**
 ```
 ganache-cli -a 50
@@ -52,12 +53,14 @@ npm run dapp
 ```
 
 **Finally access the application in a browser**
+
 `http://localhost:8000`
 
 
 ## Deploy
 
 To build dapp for prod:
+
 `npm run dapp:prod`
 
 Deploy the contents of the ./dapp folder
