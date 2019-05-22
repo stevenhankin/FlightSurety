@@ -14,36 +14,46 @@ npm install
 truffle compile
 ```
 
-## Develop Client
-
-Start Ganache using prepared mnemonic (to ensure accounts align)
+## Run Tests
+This requires running two components in two shells
+The first is a local Ethereum node (using Ganache) whilst running the tests
+**In shell #1 start Ganache:**
 ```
-ganache-cli -a 50 -m "quote ensure arrive vote dinosaur illegal wood equal disagree teach tray planet"
+ganache-cli -a 50
 ```
+The flag `-a 50` will create 50 funded test addresses on your local node
 
-To run truffle tests:
+**In shell #2 launch the Contract and Oracle tests:**
 ```shell
 truffle test ./test/flightSurety.js
 truffle test ./test/oracles.js
 ```
 
-To use the dapp:
+## Run Application
 
-```shell
+**In shell #1 start Ganache (as was done for tests above):**
+```
+ganache-cli -a 50
+```
+
+**In shell #2 compile/migrate the contracts AND launch the Oracles Service**
+```
+rm -r build/
+truffle migrate
+npm run server
+```
+The recursive removal of the build is to ensure the correct build of the contracts prior to migration (deployment)
+
+**In shell #3 start the Web App Server**
+```
+rm -r build/
 truffle migrate
 npm run dapp
 ```
 
-To view dapp:
-
+**Finally access the application in a browser**
 `http://localhost:8000`
 
-## Develop Server
-
-```shell
-npm run server
-truffle test ./test/oracles.js
-```
 
 ## Deploy
 
