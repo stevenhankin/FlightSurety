@@ -24,22 +24,32 @@ let totalRegistered=0;
     try {
         const accounts = await web3.eth.getAccounts();
         let fee = BigNumber(await flightSuretyApp.methods.getRegistrationFee().call()).toString();
-        for (let a = 1; a <= ORACLES_COUNT; a++) {
-            const acc=accounts[a];
+        let a = 1;
+        while (a <= ORACLES_COUNT && totalRegistered <= ORACLES_COUNT) {
+            const acc=accounts[a++];
+            console.log(`${a}: ${acc}`);
+            ((a,acc) => (
             flightSuretyApp
                 .methods
                 .registerOracle()
-                .send({from: accounts[a], value: fee, gas:"450000"}, (error, result) => {
+                .send({from: acc, value: fee, gas:"450000"}, (error, result) => {
                     if (error) {
-                        console.error('ERROR',error)
+                        console.error('ERROR',error);
+                        console.log('\n** Unstable! Please restart as follows;   truffle migrate --reset  &&  npm run server');
+                        process.exit(1);
                     } else {
                         totalRegistered++;
-                        console.log(`Registered Oracle ${a} (${totalRegistered} so far)`,acc)
+                        if (totalRegistered == ORACLES_COUNT) {
+                            console.log('\nAll Oracles registered successfully!');
+                        } else {
+                            console.log(`Registered Oracle ${a} (${totalRegistered} so far)`,acc)
+                        }
                     }
-                });
+                })
+            ))(a,acc);
         }
     } catch (e) {
-        console.error(e)
+        console.error('** ouch',e)
     }
 
 })();

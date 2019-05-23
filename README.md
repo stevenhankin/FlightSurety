@@ -16,7 +16,7 @@ truffle compile
 
 Start Ganache using prepared mnemonic (to ensure accounts align)
 ```
-ganache-cli -a 50 -m "quote ensure arrive vote dinosaur illegal wood equal disagree teach tray planet"
+ganache-cli -a 50
 ```
 
 To run truffle tests:
