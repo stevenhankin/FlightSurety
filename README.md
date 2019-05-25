@@ -36,19 +36,20 @@ truffle test ./test/oracles.js
 ```
 ganache-cli -a 50
 ```
+Removing an old build (if it exists) is sometimes necessary for migrations to work
 
 **In shell #2 compile/migrate the contracts AND launch the Oracles Service**
+Removing an old build (if it exists) is sometimes necessary for migrations to work:
 ```
 rm -r build/
-truffle migrate
-npm run server
 ```
-The recursive removal of the build is to ensure the correct build of the contracts prior to migration (deployment)
+You may need to **execute this step at 3 times** before all Oracles will successfully register:
+```
+truffle migrate --reset && npm run server
+```
 
 **In shell #3 start the Web App Server**
 ```
-rm -r build/
-truffle migrate
 npm run dapp
 ```
 
