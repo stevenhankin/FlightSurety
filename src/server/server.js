@@ -1,5 +1,5 @@
-import FlightSuretyApp from '../../build/contracts/FlightSuretyApp.json';
-import FlightSuretyData from '../../build/contracts/FlightSuretyData.json';
+import FlightSuretyApp from '../dapp/src/build/contracts/FlightSuretyApp.json';
+import FlightSuretyData from '../dapp/src/build/contracts/FlightSuretyData.json';
 import Config from './config.json';
 import Web3 from 'web3';
 import express from 'express';
@@ -60,9 +60,11 @@ flightSuretyData.events.OracleRequest({
     fromBlock: 0
 }, function (error, event) {
 
-    if (error) console.log(error)
-    console.log('Event!',event)
+    if (error) console.log(error);
+    console.log('Event!',event);
+    console.log(event.returnValues);
 });
+
 
 const app = express();
 app.get('/api', (req, res) => {
@@ -70,5 +72,6 @@ app.get('/api', (req, res) => {
         message: 'An API for use with your Dapp!'
     })
 });
+
 
 export default app;
