@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.4.24;
 
 import "../node_modules/openzeppelin-solidity/contracts/math/SafeMath.sol";
 
@@ -329,7 +329,7 @@ contract FlightSuretyData {
 
     // Add a flight schedule to an airline
     function registerFlight(address _airline,
-        string calldata _flight,
+        string  _flight,
         uint256 _timestamp)
     external
     requireIsOperational
@@ -349,7 +349,7 @@ contract FlightSuretyData {
     function buy
     (address passenger,
         address _airline,
-        string calldata _flight,
+        string  _flight,
         uint256 _timestamp
     )
     external
@@ -371,7 +371,7 @@ contract FlightSuretyData {
     function creditInsurees
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp
     )
     external
@@ -401,7 +401,7 @@ contract FlightSuretyData {
     function processFlightStatus
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         uint8 statusCode
     )
@@ -419,7 +419,7 @@ contract FlightSuretyData {
      *
     */
     function pay
-    (address payable passenger
+    (address  passenger
     )
     external
     requireAuthorizedCaller
@@ -511,7 +511,7 @@ contract FlightSuretyData {
     function fetchFlightStatus
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         address passenderAddr
     )
@@ -543,12 +543,12 @@ contract FlightSuretyData {
     {
         uint8[3] memory indexes = generateIndexes(oracleAddr);
 
-        Oracle memory newOracle = Oracle({
-            isRegistered : true,
-            indexes : indexes
-            });
-
-        oracles[oracleAddr] = newOracle;
+//        Oracle memory newOracle = Oracle({
+//            isRegistered : true,
+//            indexes : indexes
+//            });
+//
+//        oracles[oracleAddr] = newOracle;
 
     }
 
@@ -573,7 +573,7 @@ contract FlightSuretyData {
     (
         uint8 index,
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         uint8 statusCode,
         uint256 min_responses,
@@ -615,7 +615,7 @@ contract FlightSuretyData {
         uint8 maxValue = 10;
 
         // Pseudo random number...the incrementing nonce adds variation
-        uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number - nonce++), account))) % maxValue);
+        uint8 random = uint8(uint256(keccak256(abi.encodePacked(blockhash(block.number), nonce++, account))) % maxValue);
 
         if (nonce > 250) {
             nonce = 0;
@@ -636,9 +636,11 @@ contract FlightSuretyData {
     returns (uint8[3] memory)
     {
         uint8[3] memory indexes;
+
         indexes[0] = getRandomIndex(account);
 
         indexes[1] = indexes[0];
+
         while (indexes[1] == indexes[0]) {
             indexes[1] = getRandomIndex(account);
         }

@@ -8,7 +8,7 @@ module.exports = function (deployer) {
     let firstAirline = '0x40d41f8f2db4ec63ec4c327be791f78d54910201'; // account[0] from mnemonic
 
     deployer.deploy(FlightSuretyData, firstAirline)
-        .then(() => {
+        .then(async () => {
             /*
                 The parameter for the data contract is passed
                 as an additional parameter to deploy()

@@ -20,9 +20,12 @@ The first is a local Ethereum node (using Ganache) whilst running the tests
 
 **In shell #1 start Ganache:**
 ```
-ganache-cli -a 50
+ganache-cli -a 50 -e 1000 -m "quote ensure arrive vote dinosaur illegal wood equal disagree teach tray planet" 
 ```
 The flag `-a 50` will create 50 funded test addresses on your local node
+
+The specific -m mnemonic is needed since the address of first airline is 
+passed for migration of Data Contract.
 
 **In shell #2 launch the Contract and Oracle tests:**
 ```shell

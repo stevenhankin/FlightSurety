@@ -1,4 +1,4 @@
-pragma solidity ^0.5.8;
+pragma solidity ^0.4.24;
 
 // It's important to avoid vulnerabilities due to numeric overflow bugs
 // OpenZeppelin's SafeMath library, when used correctly, protects agains such bugs
@@ -228,7 +228,7 @@ contract FlightSuretyApp {
     // Overpayment will result in a return
     function buy(
         address _airline,
-        string calldata _flight,
+        string  _flight,
         uint256 _timestamp)
     external
     payable
@@ -258,7 +258,7 @@ contract FlightSuretyApp {
      */
     function registerFlight
     (
-        string calldata _flight,
+        string  _flight,
         uint256 _timestamp
     )
     external
@@ -276,7 +276,7 @@ contract FlightSuretyApp {
     function processFlightStatus
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         uint8 statusCode
     )
@@ -318,7 +318,7 @@ contract FlightSuretyApp {
     function fetchFlightStatus
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp
     )
     requireIsOperational
@@ -336,7 +336,7 @@ contract FlightSuretyApp {
     (
         uint8 index,
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         uint8 statusCode
     )
@@ -397,14 +397,14 @@ contract FlightSuretyData {
     payable;
 
     function registerFlight(address _airline,
-        string calldata _flight,
+        string  _flight,
         uint256 _timestamp)
     external;
 
     function buy
     (address passenger,
         address _airline,
-        string calldata _flight,
+        string  _flight,
         uint256 _timestamp
     )
     external
@@ -413,7 +413,7 @@ contract FlightSuretyData {
     function processFlightStatus
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         uint8 statusCode
     )
@@ -422,13 +422,13 @@ contract FlightSuretyData {
     function creditInsurees
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp
     )
     external;
 
     function pay
-    (address payable passenger
+    (address  passenger
     )
     external;
 
@@ -441,7 +441,7 @@ contract FlightSuretyData {
     function fetchFlightStatus
     (
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         address passenderAddr
     )
@@ -451,7 +451,7 @@ contract FlightSuretyData {
     (
         uint8 index,
         address airline,
-        string calldata flight,
+        string  flight,
         uint256 timestamp,
         uint8 statusCode,
         uint256 min_responses,

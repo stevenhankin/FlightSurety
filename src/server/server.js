@@ -1,3 +1,4 @@
+import 'babel-polyfill';
 import FlightSuretyApp from '../dapp/src/build/contracts/FlightSuretyApp.json';
 import FlightSuretyData from '../dapp/src/build/contracts/FlightSuretyData.json';
 import Config from './config.json';
@@ -25,28 +26,50 @@ let totalRegistered=0;
         const accounts = await web3.eth.getAccounts();
         let fee = BigNumber(await flightSuretyApp.methods.getRegistrationFee().call()).toString();
         let a = 1;
-        while (a <= ORACLES_COUNT && totalRegistered <= ORACLES_COUNT) {
-            const acc=accounts[a++];
+        let attempts = 0;
+        while (a <= accounts.length &&
+        totalRegistered <= ORACLES_COUNT) {
+
+            attempts ++;
+
+            const acc=accounts[a];
             console.log(`${a}: ${acc}`);
-            ((a,acc) => (
-            flightSuretyApp
-                .methods
-                .registerOracle()
-                .send({from: acc, value: fee, gas:"450000"}, (error, result) => {
-                    if (error) {
-                        console.error('ERROR',error);
-                        console.log('\n** Unstable! Please restart as follows;   truffle migrate --reset  &&  npm run server');
-                        process.exit(1);
-                    } else {
-                        totalRegistered++;
-                        if (totalRegistered == ORACLES_COUNT) {
-                            console.log('\nAll Oracles registered successfully!');
-                        } else {
-                            console.log(`Registered Oracle ${a} (${totalRegistered} so far)`,acc)
-                        }
-                    }
-                })
-            ))(a,acc);
+
+            try {
+
+                let result = await flightSuretyApp
+                    .methods
+                    .registerOracle()
+                    .send({from: accounts[0], value: fee, gas: "450000"});
+
+                a++;
+                totalRegistered++;
+                console.log(`${totalRegistered} after ${attempts} attempts`, acc)
+
+            }
+            catch (e) {
+                console.log('failed on this attempt..not enough blocks in chain yet?')
+            }
+            // ((a,acc) => (
+            // flightSuretyApp
+            //     .methods
+            //     .registerOracle()
+            //     .send({from: acc, value: fee, gas:"450000"}, (error, result) => {
+            //         console.log({result})
+            //         if (error) {
+            //             console.error('ERROR',error);
+            //             console.log('\n** Unstable! Please restart as follows;   truffle migrate --reset  &&  npm run server');
+            //             process.exit(1);
+            //         } else {
+            //             totalRegistered++;
+            //             if (totalRegistered == ORACLES_COUNT) {
+            //                 console.log('\nAll Oracles registered successfully!');
+            //             } else {
+            //                 console.log(`Registered Oracle ${a} (${totalRegistered} so far)`,acc)
+            //             }
+            //         }
+            //     })
+            // ))(a,acc);
         }
     } catch (e) {
         console.error('** ouch',e)
