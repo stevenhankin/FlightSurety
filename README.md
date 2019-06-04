@@ -37,18 +37,20 @@ truffle test ./test/oracles.js
 
 **In shell #1 start Ganache (as was done for tests above):**
 ```
-ganache-cli -a 50
+ganache-cli -a 50 -e 1000 -m "quote ensure arrive vote dinosaur illegal wood equal disagree teach tray planet" 
 ```
+The flag `-a 50` will create 50 funded test addresses on your local node
+
+The specific -m mnemonic is needed since the address of first airline is 
+passed for migration of Data Contract.
 
 **In shell #2 compile/migrate the contracts AND launch the Oracles Service**
+Removing an old build (if it exists) is sometimes necessary for migrations to work:
 ```
-rm -r build/
-truffle migrate --reset && npm run server
+rm -f ./src/dapp/src/build/contracts/*.json
+truffle migrate --reset
+npm run server
 ```
-Note that this will need to be done **3 times** due to some bizarre issue with Ganache / Truffle
-
-i.e. CTRL+C and rerun 3 times
-
 **In shell #3 start the Web App Server**
 ```
 cd src/dapp
