@@ -15,118 +15,54 @@ import {connect} from "react-redux";
 import {addFlight} from "./actions";
 
 
-/*
-export default class Contract {
-
-    constructor(network, callback) {
-
-        let config = Config[network];
-        this.web3 = new Web3(new Web3.providers.HttpProvider(config.url));
-        this.flightSuretyApp = new this.web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-        this.initialize(callback);
-        this.owner = null;
-        this.airlines = [];
-        this.passengers = [];
-    }
-
-    initialize(callback) {
-
-        console.log("initialize")
-
-        this.web3.eth.getAccounts((error, accts) => {
-
-            console.log({accts})
-
-            this.owner = accts[0];
-
-            let counter = 1;
-            const TEN_ETH = this.web3.utils.toWei("10");
-
-
-            while (this.airlines.length < 5) {
-                const account = accts[counter++];
-                console.log({account})
-                this.airlines.push(account);
-
-                // Associate 2 flights with airline
-                this.flightSuretyApp.methods.fund().send({from: account, value: TEN_ETH})
-                    .then(() => {
-                        this.flightSuretyApp.methods.registerFlight('moomoomoo', Date.now()).send({from: account});
-
-                    })
-            }
-
-            while (this.passengers.length < 5) {
-                this.passengers.push(accts[counter++]);
-            }
-
-
-            // Generate some test flights
-            const flights = [];
-
-
-            callback();
-        });
-    }
-
-    isOperational(callback) {
-        let self = this;
-        self.flightSuretyApp.methods
-            .isOperational()
-            .call({from: self.owner}, callback);
-    }
-
-    fetchFlightStatus(flight, callback) {
-        let self = this;
-        let payload = {
-            airline: self.airlines[0],
-            flight: flight,
-            timestamp: Math.floor(Date.now() / 1000)
-        }
-        self.flightSuretyApp.methods
-            .fetchFlightStatus(payload.airline, payload.flight, payload.timestamp)
-            .send({from: self.owner}, (error, result) => {
-                callback(error, payload);
-            });
-    }
-}
-
- */
+const NETWORK = 'localhost'; // hardcoded for now
+const config = Config[NETWORK];
+const web3 = (new Web3(new Web3.providers.HttpProvider(config.url)));
+const TEN_ETH = web3.utils.toWei("10");
 
 
 const Contract = (props) => {
 
-    console.log("PROPS",{props});
+    console.log("PROPS", {props});
 
 
-    const NETWORK = 'localhost'; // hardcoded for now
     const [owner, setOwner] = useState("");
     const [airlines, setAirlines] = useState([]);
     const [passengers, setPassengers] = useState([]);
     const [isOperational, setIsOperational] = useState(false);
 
 
-    useEffect(() => {
-        let config = Config[NETWORK];
-        const web3 = (new Web3(new Web3.providers.HttpProvider(config.url)));
+    // On startup, initialise
+    useEffect( () => {
         console.log({config}, {web3});
         const flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
-
         console.log("initialize", {owner});
 
+        // For a given index, generate a Flight Registration callback
+        const fundCallbackCreate = (idx) => {
+            return (err) => {
+                if (err) {
+                    console.log(err);
+                } else {
+                    const callSign = `Flight${idx}`;
+                    const timestamp = Date.now() + Math.floor(Math.random() * 10000000);
+                    const flight = {callSign, timestamp};
+                    console.log(addFlight);
+                    addFlight(flight);
+                    flightSuretyApp.methods.registerFlight(callSign, timestamp);
+                }
+            }
+        };
+
         web3.eth.getAccounts((error, accts) => {
-
             console.log('Got accounts!', {accts}, {error})
-
             if (error) {
                 alert(error)
             } else {
-                console.log('HERE');
 
                 setOwner(accts[0]);
 
                 let counter = 1;
-                const TEN_ETH = web3.utils.toWei("10");
 
                 let _airlines = [];
                 let idx = 1;
@@ -137,19 +73,7 @@ const Contract = (props) => {
                     const fund = flightSuretyApp.methods.fund();
                     console.log('before fund', {fund});
                     const resp = fund.send({from: account, value: TEN_ETH},
-                        (err, resp) => {
-                            if (err) {
-                                console.log(err);
-                            } else {
-                                const callSign = `Flight${idx++}`;
-                                const timestamp = Date.now() + Math.floor(Math.random() * 10000000);
-                                const flight = {callSign, timestamp};
-                                console.log(addFlight);
-                                addFlight(flight);
-                                flightSuretyApp.methods.registerFlight(callSign, timestamp);
-
-                            }
-                        }
+                        fundCallbackCreate(idx)
                     );
                     console.log('after fund')
                 }
@@ -171,7 +95,7 @@ const Contract = (props) => {
                     });
             }
         });
-    }, []);
+    },[]);
 
 
     console.log({props})
@@ -224,6 +148,6 @@ const Contract = (props) => {
     )
 };
 
-const mapStateToProps = state => ({flights:state.flights});
+const mapStateToProps = state => ({flights: state.flights});
 
 export default connect(mapStateToProps)(Contract);
