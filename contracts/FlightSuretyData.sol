@@ -543,12 +543,12 @@ contract FlightSuretyData {
     {
         uint8[3] memory indexes = generateIndexes(oracleAddr);
 
-//        Oracle memory newOracle = Oracle({
-//            isRegistered : true,
-//            indexes : indexes
-//            });
-//
-//        oracles[oracleAddr] = newOracle;
+        Oracle memory newOracle = Oracle({
+            isRegistered : true,
+            indexes : indexes
+            });
+
+        oracles[oracleAddr] = newOracle;
 
     }
 
