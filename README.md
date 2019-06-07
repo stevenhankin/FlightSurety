@@ -29,6 +29,7 @@ passed for migration of Data Contract.
 
 **In shell #2 launch the Contract and Oracle tests:**
 ```shell
+rm -f ./src/dapp/src/build/contracts/*.json
 truffle test ./test/flightSurety.js
 truffle test ./test/oracles.js
 ```
