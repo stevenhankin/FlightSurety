@@ -214,7 +214,7 @@ contract FlightSuretyApp {
         address voter = msg.sender;
         if (_registeredAirlines < 4) {
             // Votes are not necessary for initial 4 airlines
-            flightSuretyData.addAirline(airline, voter, true, false, 0);
+            flightSuretyData.addAirline(airline, true, false, 0);
         } else {
             uint256 idx = flightSuretyData.findAirline(airline);
             if (idx != SENTINEL) {
@@ -226,7 +226,7 @@ contract FlightSuretyApp {
                 }
             } else {
                 // First request - Start with 1 vote and not yet registered
-                flightSuretyData.addAirline(airline, voter, false, false, 0);
+                flightSuretyData.addAirline(airline, false, false, 0);
                 // Record vote
                 idx = flightSuretyData.findAirline(airline);
                 flightSuretyData.registerVote(idx, voter);
@@ -265,7 +265,7 @@ contract FlightSuretyApp {
     // Overpayment will result in a return
     function buy(
         address _airline,
-        string  _flight,
+        string _flight,
         uint256 _timestamp)
     external
     payable
@@ -295,7 +295,7 @@ contract FlightSuretyApp {
      */
     function registerFlight
     (
-        string  _flight,
+        string _flight,
         uint256 _timestamp
     )
     external
@@ -313,7 +313,7 @@ contract FlightSuretyApp {
     function processFlightStatus
     (
         address airline,
-        string  flight,
+        string flight,
         uint256 timestamp,
         uint8 statusCode
     )
@@ -322,14 +322,18 @@ contract FlightSuretyApp {
     {
         flightSuretyData.processFlightStatus(airline, flight, timestamp, statusCode);
         if (statusCode == STATUS_CODE_LATE_AIRLINE) {
-            flightSuretyData.creditInsurees(airline, flight, timestamp);
+            /* To ADD 150% compensation using integers, can multiply by 1 and divide by 2
+               This approach can allow for any range of percentages by representing rationals
+             */
+            uint8 multiplyBy = 1;
+            uint8 divideBy = 2;
+            flightSuretyData.creditInsurees(airline, flight, timestamp, multiplyBy, divideBy);
         }
     }
 
-
+    ////////////////////////////////////////////////////////////////
     // region ORACLE MANAGEMENT
-
-
+    ////////////////////////////////////////////////////////////////
 
     // Register an oracle with the contract
     function registerOracle
@@ -343,7 +347,8 @@ contract FlightSuretyApp {
         require(msg.value >= REGISTRATION_FEE, "Registration fee is required");
 
         // SafeMath : determine any excess to return
-        uint256 amountToReturn = 0; //msg.value.sub(REGISTRATION_FEE);
+        uint256 amountToReturn = 0;
+        //msg.value.sub(REGISTRATION_FEE);
         // transfer payment on to data contract and flag as funded
         flightSuretyData.registerOracle.value(REGISTRATION_FEE)(msg.sender);
         // ..before crediting any overspend
@@ -355,7 +360,7 @@ contract FlightSuretyApp {
     function fetchFlightStatus
     (
         address airline,
-        string  flight,
+        string flight,
         uint256 timestamp
     )
     requireIsOperational
@@ -373,7 +378,7 @@ contract FlightSuretyApp {
     (
         uint8 index,
         address airline,
-        string  flight,
+        string flight,
         uint256 timestamp,
         uint8 statusCode
     )
@@ -398,8 +403,9 @@ contract FlightSuretyApp {
 
 }
 
-
+////////////////////////////////////////////////////////////////
 // API for the Data Contract
+////////////////////////////////////////////////////////////////
 contract FlightSuretyData {
     function isOperational()
     public
@@ -412,7 +418,7 @@ contract FlightSuretyData {
     returns (bool);
 
     function addAirline
-    (address _airline, address _voter, bool isRegistered , bool isFunded, uint8 votes
+    (address _airline, bool isRegistered, bool isFunded, uint8 votes
     )
     external;
 
@@ -434,14 +440,14 @@ contract FlightSuretyData {
     payable;
 
     function registerFlight(address _airline,
-        string  _flight,
+        string _flight,
         uint256 _timestamp)
     external;
 
     function buy
     (address passenger,
         address _airline,
-        string  _flight,
+        string _flight,
         uint256 _timestamp
     )
     external
@@ -450,7 +456,7 @@ contract FlightSuretyData {
     function processFlightStatus
     (
         address airline,
-        string  flight,
+        string flight,
         uint256 timestamp,
         uint8 statusCode
     )
@@ -459,13 +465,15 @@ contract FlightSuretyData {
     function creditInsurees
     (
         address airline,
-        string  flight,
-        uint256 timestamp
+        string flight,
+        uint256 timestamp,
+        uint256 multiplyBy,
+        uint256 divideBy
     )
     external;
 
     function pay
-    (address  passenger
+    (address passenger
     )
     external;
 
@@ -478,7 +486,7 @@ contract FlightSuretyData {
     function fetchFlightStatus
     (
         address airline,
-        string  flight,
+        string flight,
         uint256 timestamp,
         address passenderAddr
     )
@@ -488,7 +496,7 @@ contract FlightSuretyData {
     (
         uint8 index,
         address airline,
-        string  flight,
+        string flight,
         uint256 timestamp,
         uint8 statusCode,
         uint256 min_responses,

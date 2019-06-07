@@ -286,7 +286,7 @@ contract FlightSuretyData {
      *
      */
     function addAirline
-    (address _airline, address _voter, bool isRegistered , bool isFunded, uint8 votes
+    (address _airline, bool isRegistered, bool isFunded, uint8 votes
     )
     external
     requireAuthorizedCaller
@@ -381,7 +381,9 @@ contract FlightSuretyData {
     (
         address airline,
         string  flight,
-        uint256 timestamp
+        uint256 timestamp,
+        uint256 multiplyBy,
+        uint256 divideBy
     )
     external
     requireAuthorizedCaller
@@ -394,10 +396,9 @@ contract FlightSuretyData {
             Insurance memory _insurance = insurance[i];
             if (_insurance.flightKey == delayedFlightKey) {
                 address passenger = _insurance.passenger;
-                // Add payment to each passenger affected by the delayed flight
-                // and at 1.5x original amount
-                uint256 halfOriginal = _insurance.payment.div(2);
-                passengerCredit[passenger] += _insurance.payment.add(halfOriginal);
+                // Compensation determined using rationals
+                uint256 compensation = _insurance.payment.mul(multiplyBy).div(divideBy);
+                passengerCredit[passenger] += _insurance.payment.add(compensation);
                 // ..and remove insurance record to prevent possible double-spend
                 delete insurance[i];
             }
