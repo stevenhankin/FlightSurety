@@ -25,7 +25,6 @@ const Contract = (props) => {
 
     console.log("PROPS", {props});
 
-
     const [owner, setOwner] = useState("");
     const [airlines, setAirlines] = useState([]);
     const [passengers, setPassengers] = useState([]);

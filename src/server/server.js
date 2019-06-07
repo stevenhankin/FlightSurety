@@ -15,42 +15,85 @@ web3.eth.defaultAccount = web3.eth.accounts[0];
 let flightSuretyData = new web3.eth.Contract(FlightSuretyData.abi, config.dataAddress);
 let flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
 
-const ORACLES_COUNT = 35;
+// Account Index to choose accounts for each airline and oracle
+let accIdx = 1;
 
-let totalRegistered = 0;
 
-console.log('\nRegistering Oracles..\n');
-// Register Oracles
+const AIRLINES_COUNT = 4;
+const ORACLES_COUNT = 25;
 
-const registerOracles = async () => {
+
+/////////////
+// Airlines
+/////////////
+const registerAirlines = async () => {
+    console.log('\nRegistering Airlines..\n');
     try {
         const accounts = await web3.eth.getAccounts();
-        let fee = BigNumber(await flightSuretyApp.methods.getRegistrationFee().call()).toString();
-        let a = 1;
+        let totalRegistered = 0;
         let attempts = 0;
-        while (a <= accounts.length &&
-        totalRegistered <= ORACLES_COUNT) {
+        while (accIdx <= accounts.length &&
+        totalRegistered <= AIRLINES_COUNT) {
             attempts++;
-            const acc = accounts[a];
-            console.log(`${a}: ${acc}`);
+            const acc = accounts[accIdx];
+            console.log(`${accIdx}: ${acc}`);
             try {
                 await flightSuretyApp
                     .methods
-                    .registerOracle()
-                    .send({from: accounts[0], value: fee, gas: "450000"});
-                a++;
+                    .registerAirline
+                    .call(acc, {from: accounts[0], gas: "450000"});
+                accIdx++;
                 totalRegistered++;
             } catch (e) {
-                console.log('failed on this attempt..not enough blocks in chain yet?')
+                console.log(e)
+                process.abort();
             }
         }
-        console.log('\n\nAll Oracles registered!');
+        console.log('\nAll Airlines registered!');
     } catch (e) {
         console.error('** ouch', e)
     }
 };
 
-registerOracles().then(
+
+/////////////
+// Oracles
+/////////////
+const registerOracles = async () => {
+    console.log('\nRegistering Oracles..\n');
+    try {
+        const accounts = await web3.eth.getAccounts();
+        let totalRegistered = 0;
+        let fee = BigNumber(await flightSuretyApp.methods.getRegistrationFee().call()).toString();
+        let attempts = 0;
+        while (accIdx <= accounts.length &&
+        totalRegistered <= ORACLES_COUNT) {
+            attempts++;
+            const acc = accounts[accIdx];
+            console.log(`${accIdx}: ${acc}`);
+            try {
+                await flightSuretyApp
+                    .methods
+                    .registerOracle()
+                    .send({from: acc, value: fee, gas: "450000"});
+                accIdx++;
+                totalRegistered++;
+            } catch (e) {
+                console.log('failed on this attempt..not enough blocks in chain yet?')
+                process.abort()
+            }
+        }
+        console.log('\nAll Oracles registered!');
+    } catch (e) {
+        console.error('** ouch', e)
+    }
+};
+
+registerAirlines()
+// registerOracles()
+//     .then(registerAirlines)
+    .then(registerOracles)
+    .then(
     // Listen for events
     flightSuretyData.events.OracleRequest({
         fromBlock: 0
