@@ -126,7 +126,6 @@ contract('Flight Surety Tests', async (accounts) => {
         assert.equal(result, false, "Airline should not be funded if it is unable to meet the minimum funding requirements");
     });
 
-
     it('(airline) can be FUNDED if funding requirements are met', async () => {
         // ARRANGE
 
@@ -344,8 +343,6 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(Passenger Payment) can pay up to 1 ether for purchasing flight insurance', async () => {
         // ARRANGE
-
-        
 
         let reverted = false;
 

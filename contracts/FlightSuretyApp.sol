@@ -39,6 +39,8 @@ contract FlightSuretyApp {
     // Number of oracles that must respond for valid status
     uint256 private constant MIN_RESPONSES = 3;
 
+    uint256 private constant SENTINEL = 2 ^ 256 - 1;                // MAX VALUE => "not found"
+
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -84,6 +86,18 @@ contract FlightSuretyApp {
         require(flightSuretyData.isFundedAirline(airline) == false, "Airline is already funded - should not fund twice");
         _;
     }
+
+
+    /**
+    * @dev Modifier prevent double-funding of airline
+    */
+    modifier requireNotAlreadyVoted(address airline, address voter)
+    {
+        require(flightSuretyData.hasNotAlreadyVoted(airline, voter), "A registered airline cannot vote more than once for same airline");
+        _;
+    }
+
+
 
 
 
@@ -194,10 +208,33 @@ contract FlightSuretyApp {
     external
     requireIsOperational
     requireIsFundedAirline(msg.sender) // the SENDER needs to be a funded airline
+    requireNotAlreadyVoted(airline, msg.sender)
     {
-        // Only called once for a given airline for first 4
-        flightSuretyData.registerAirline(airline, msg.sender);
+        uint256 _registeredAirlines = flightSuretyData.registeredAirlinesCount();
+        address voter = msg.sender;
+        if (_registeredAirlines < 4) {
+            // Votes are not necessary for initial 4 airlines
+            flightSuretyData.addAirline(airline, voter, true, false, 0);
+        } else {
+            uint256 idx = flightSuretyData.findAirline(airline);
+            if (idx != SENTINEL) {
+                flightSuretyData.registerVote(idx, voter);
+                // Once 50% membership votes for this airline, it will be registered
+                uint256 _count50pct = _registeredAirlines.div(2);
+                if (flightSuretyData.airlineVotes(idx) >= _count50pct) {
+                    flightSuretyData.registerAirline(idx);
+                }
+            } else {
+                // First request - Start with 1 vote and not yet registered
+                flightSuretyData.addAirline(airline, voter, false, false, 0);
+                // Record vote
+                idx = flightSuretyData.findAirline(airline);
+                flightSuretyData.registerVote(idx, voter);
+            }
+        }
+
     }
+
 
     /**
      * @dev Initial funding for the insurance. Unless there are too many delayed flights
@@ -374,8 +411,8 @@ contract FlightSuretyData {
     view
     returns (bool);
 
-    function registerAirline
-    (address airline, address voter
+    function addAirline
+    (address _airline, address _voter, bool isRegistered , bool isFunded, uint8 votes
     )
     external;
 
@@ -465,4 +502,26 @@ contract FlightSuretyData {
     view
     public
     returns (uint8[3] memory);
+
+    function findAirline(address _airline)
+    external
+    view
+    returns (uint256);
+
+    function registerVote(uint256 idx, address _voter)
+    external;
+
+    function airlineVotes(uint256 idx)
+    external
+    view
+    returns (uint256);
+
+    function registerAirline(uint256 idx)
+    external;
+
+    function hasNotAlreadyVoted(address _airline, address _voter)
+    external
+    view
+    returns (bool);
+
 }

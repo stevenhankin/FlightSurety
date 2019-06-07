@@ -34,7 +34,7 @@ contract FlightSuretyData {
         mapping(address => bool) voters;                        // track airlines that have already voted
     }
 
-    Airline[] private airlines;
+    Airline[] private airlines;                                 // List of airlines (may or may not be registered)
     Insurance[] private insurance;                              // List of passenger insurance
     mapping(address => uint256) private passengerCredit;        // For a given passenger has the total credit due
     uint256 private constant SENTINEL = 2 ^ 256 - 1;                // MAX VALUE => "not found"
@@ -149,13 +149,7 @@ contract FlightSuretyData {
         _;
     }
 
-    // A voter can only raise one registration vote
-    // for a given airline
-    modifier requireNotAlreadyVoted(address _airline, address _voter)
-    {
-        require(hasNotAlreadyVoted(_airline, _voter), "A registered airline cannot vote more than once for same airline");
-        _;
-    }
+
 
 
     /********************************************************************************************/
@@ -205,7 +199,7 @@ contract FlightSuretyData {
     // Return index of the Airline for the matching address
     // or SENTINEL if no match
     function findAirline(address _airline)
-    internal
+    public
     view
     returns (uint256)
     {
@@ -225,7 +219,7 @@ contract FlightSuretyData {
     // True if the Voter has not already raise
     // a registration vote for airline
     function hasNotAlreadyVoted(address _airline, address _voter)
-    internal
+    external
     view
     returns (bool)
     {
@@ -291,39 +285,54 @@ contract FlightSuretyData {
      *      Can only be called from FlightSuretyApp contract
      *
      */
-    function registerAirline
-    (address _airline, address _voter
+    function addAirline
+    (address _airline, address _voter, bool isRegistered , bool isFunded, uint8 votes
     )
     external
     requireAuthorizedCaller
     requireIsOperational
-    requireNotAlreadyVoted(_airline, _voter)
     {
-        uint256 _registeredAirlines = registeredAirlinesCount();
-        if (_registeredAirlines < 4) {
-            // Votes are not necessary for initial airlines - setting to 0
-            airlines.push(Airline({airlineAccount : _airline, isRegistered : true, isFunded : false, votes : 0}));
-        } else {
-            uint256 idx = findAirline(_airline);
-            if (idx != SENTINEL) {
-                // Airline has had at least one registration request
-                // Incrementing by 1 vote..
-                airlines[idx].votes++;
-                // Record vote
-                airlines[idx].voters[_voter] = true;
-                // Once 50% membership votes for this airline, it will be registered
-                uint256 _count50pct = _registeredAirlines.div(2);
-                if (airlines[idx].votes >= _count50pct) {
-                    airlines[idx].isRegistered = true;
-                }
-            } else {
-                // First request - Start with 1 vote and not yet registered
-                airlines.push(Airline({airlineAccount : _airline, isRegistered : false, isFunded : false, votes : 1}));
-                // Record vote
-                idx = findAirline(_airline);
-                airlines[idx].voters[_voter] = true;
-            }
-        }
+        airlines.push(Airline({airlineAccount : _airline, isRegistered:isRegistered, isFunded:isFunded , votes:votes}));
+    }
+
+    /**
+     * An airline has voted for another airline to join group
+     */
+    function registerVote(uint256 idx, address _voter)
+    external
+    requireAuthorizedCaller
+    requireIsOperational
+    {
+        // Airline has had at least one registration request
+        // Incrementing by 1 vote..
+        airlines[idx].votes++;
+        // Record vote
+        airlines[idx].voters[_voter] = true;
+    }
+
+
+    /**
+     *  Return count of votes for specified airline
+     */
+    function airlineVotes(uint256 idx)
+    external
+    view
+    requireAuthorizedCaller
+    requireIsOperational
+    returns (uint256)
+    {
+        return airlines[idx].votes;
+    }
+
+    /**
+     *  Update status of a listed airline to Registered
+     */
+    function registerAirline(uint256 idx)
+    external
+    requireAuthorizedCaller
+    requireIsOperational
+    {
+        airlines[idx].isRegistered = true;
     }
 
 
