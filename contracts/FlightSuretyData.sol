@@ -349,6 +349,24 @@ contract FlightSuretyData {
     }
 
 
+    /**
+     * Count the number of airlines that are actually registered
+     */
+    function registeredAirlinesCount()
+    external
+    view
+    returns (uint256)
+    {
+        uint256 registered = 0;
+        for (uint i=0; i<airlineCount; i++) {
+            if (airlines[i].isRegistered) {
+                registered++;
+            }
+        }
+        return registered;
+    }
+
+
     // Add a flight schedule to an airline
     function registerFlight(address _airline,
         string _flight,

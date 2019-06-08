@@ -215,7 +215,8 @@ contract FlightSuretyApp {
             flightSuretyData.addAirline(airline, true, false, 0);
         } else {
             uint256 idx = flightSuretyData.findAirline(airline);
-            if (idx != flightSuretyData.getAirlineCount()) {
+            if (idx < flightSuretyData.getAirlineCount()) {
+                // Matches the registration request for an existing airline...
                 flightSuretyData.registerVote(idx, voter);
                 // Once 50% membership votes for this airline, it will be registered
                 uint256 _count50pct = _registeredAirlines.div(2);
