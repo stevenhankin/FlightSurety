@@ -244,7 +244,7 @@ contract FlightSuretyApp {
     /**
      * Return status of specified airline
      */
-    function getAirline(uint256 idx)
+    function getAirlineByIdx(uint256 idx)
     external
     view
             returns (bool isRegistered,
@@ -261,6 +261,15 @@ contract FlightSuretyApp {
 //        }
 //        retAcc.length=i;
 //        return retAcc;
+    }
+
+
+    function getAirlineCount()
+    external
+    view
+    returns (uint256)
+    {
+        return flightSuretyData.getAirlineCount();
     }
 
 

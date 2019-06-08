@@ -251,7 +251,7 @@ contract FlightSuretyData {
     // Useful to check how close an airline is to being registered based on number of votes
     // returns: isRegistered, isFunded, votes
     function getAirlineStatus(address _airline)
-    external
+    public
     view
     requireAuthorizedCaller
     requireIsOperational
@@ -281,8 +281,11 @@ contract FlightSuretyData {
         uint256 votes,
         address airlineAccount)
     {
-        address airlineAccount = airlines[idx].airlineAccount;
-        var (isRegistered,
+//        bool isRegistered;
+//        bool isFunded;
+//        uint256 votes;
+         airlineAccount = airlines[idx].airlineAccount;
+         (isRegistered,
         isFunded,
         votes) = getAirlineStatus(airlineAccount);
         return (isRegistered,
@@ -290,17 +293,6 @@ contract FlightSuretyData {
         votes, airlineAccount);
     }
 
-
-    /***
-     * @dev Return number of airlines registered so far
-     *
-     */
-    function registeredAirlinesCount()
-    public
-    view
-    returns (uint256) {
-        return airlines.length;
-    }
 
 
     /**

@@ -32,12 +32,10 @@ const Contract = (props) => {
 
 
     // On startup, initialise
-    useEffect( () => {
+    useEffect(() => {
         console.log({config}, {web3});
         const flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         console.log("initialize", {owner});
-
-
 
 
         // For a given index, generate a Flight Registration callback
@@ -62,18 +60,24 @@ const Contract = (props) => {
                 alert(error)
             } else {
 
-                const meth = flightSuretyApp.methods;
-                console.log({meth});
-                flightSuretyApp.methods.getAirlines().call({from: owner}, (err, airlines) => {
+                // const meth = flightSuretyApp.methods;
+                // console.log({meth});
+
+                flightSuretyApp.methods.getAirlineCount().call({from: owner}, (err, airlineCount) => {
+                    console.log({airlineCount});
+                });
+
+                flightSuretyApp.methods.getAirlineByIdx(0).call({from: owner}, (err, airline) => {
                     console.log('***')
                     if (err) {
                         console.error({err})
                     } else {
-                        console.log({airlines})
+                        console.log({airline})
+                        setAirlines([airline.airlineAccount]);
                     }
                 });
 
-                    // .then( airlines =>
+                // .then( airlines =>
                 //     console.log({airlines})
                 // );
 
@@ -112,7 +116,7 @@ const Contract = (props) => {
                     });
             }
         });
-    },[]);
+    }, []);
 
 
     console.log({props})

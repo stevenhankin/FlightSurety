@@ -39,7 +39,7 @@ contract('Flight Surety Tests', async (accounts) => {
 
 
     it(`(Airline Contract Initialization) First airline is registered when contract is deployed`, async function () {
-        const num = await config.flightSuretyApp.registeredAirlinesCount();
+        const num = await config.flightSuretyApp.getAirlineCount();
         const result = await config.flightSuretyApp.getAirlineStatus(config.firstAirline);
         assert.equal(num.toNumber(), 1, 'Exactly one airline should be registered');
         assert.equal(result.isRegistered, true, 'The first airline is registered');
@@ -51,8 +51,6 @@ contract('Flight Surety Tests', async (accounts) => {
         let status = await config.flightSuretyData.isOperational.call();
         assert.equal(status, true, "Incorrect initial operating status value");
     });
-
-    /*
 
     it(`(multiparty) can block access to setOperatingStatus() for non-Contract Owner account`, async function () {
         // Ensure that access is denied for non-Contract Owner account
@@ -112,24 +110,24 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
-    it('(airline) list of Airlines can be retrieved', async () => {
-
-        // ARRANGE
-        // let newAirline = accounts[2];
-        let reverted = false;
-
-        // ACT
-        try {
-            let airlines = await config.flightSuretyApp.getAirlines({from: config.firstAirline,gas: 100000});
-            console.log({airlines});
-        } catch (e) {
-            reverted = true;
-            console.error({e})
-        }
-
-        // ASSERT
-        assert.equal(reverted, true, "Call should not fail to retrieve airlines");
-    });
+    // it('(airline) list of Airlines can be retrieved', async () => {
+    //
+    //     // ARRANGE
+    //     // let newAirline = accounts[2];
+    //     let reverted = false;
+    //
+    //     // ACT
+    //     try {
+    //         let airlines = await config.flightSuretyApp.getAirlines({from: config.firstAirline,gas: 100000});
+    //         console.log({airlines});
+    //     } catch (e) {
+    //         reverted = true;
+    //         console.error({e})
+    //     }
+    //
+    //     // ASSERT
+    //     assert.equal(reverted, true, "Call should not fail to retrieve airlines");
+    // });
 
     it('(airline) cannot be funded below MINIMUM FUND requirements', async () => {
         // ARRANGE
@@ -425,7 +423,7 @@ contract('Flight Surety Tests', async (accounts) => {
         assert.isBelow(1.5 - totalCreditEth, 0.01, "Passenger should receive almost 1.5 Ether for a 1 Ether insurance (minus gas costs)");
     });
 
-     */
+
 
 
 });
