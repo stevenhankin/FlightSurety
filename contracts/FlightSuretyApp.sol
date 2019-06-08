@@ -39,8 +39,6 @@ contract FlightSuretyApp {
     // Number of oracles that must respond for valid status
     uint256 private constant MIN_RESPONSES = 3;
 
-    uint256 private constant SENTINEL = 2 ^ 256 - 1;                // MAX VALUE => "not found"
-
     /********************************************************************************************/
     /*                                       FUNCTION MODIFIERS                                 */
     /********************************************************************************************/
@@ -217,7 +215,7 @@ contract FlightSuretyApp {
             flightSuretyData.addAirline(airline, true, false, 0);
         } else {
             uint256 idx = flightSuretyData.findAirline(airline);
-            if (idx != SENTINEL) {
+            if (idx != flightSuretyData.getAirlineCount()) {
                 flightSuretyData.registerVote(idx, voter);
                 // Once 50% membership votes for this airline, it will be registered
                 uint256 _count50pct = _registeredAirlines.div(2);
@@ -232,7 +230,37 @@ contract FlightSuretyApp {
                 flightSuretyData.registerVote(idx, voter);
             }
         }
+    }
+//    function getAirlineStatus(uint256 idx)
+//    external
+//    view
+//    requireAuthorizedCaller
+//    requireIsOperational
+//    returns (bool isRegistered,
+//        bool isFunded,
+//        uint256 votes,
+//        address airlineAccount)
 
+    /**
+     * Return status of specified airline
+     */
+    function getAirline(uint256 idx)
+    external
+    view
+            returns (bool isRegistered,
+                bool isFunded,
+                uint256 votes,
+                address airlineAccount)
+    {
+//        retAcc = new address[](50);
+        return flightSuretyData.getAirlineStatus(idx);
+//        uint256 airlineCount = flightSuretyData.getAirlineCount();
+//        uint256 i = 0;
+//        while (i<airlineCount && acc[i] != 0) {
+//            retAcc.push(acc[i]);
+//        }
+//        retAcc.length=i;
+//        return retAcc;
     }
 
 
@@ -269,6 +297,7 @@ contract FlightSuretyApp {
         uint256 _timestamp)
     external
     payable
+    requireIsOperational
     {
         require(msg.value >= 0, "Payment must be greater than 0");
         // Max payment is capped at 1 Ether
@@ -284,6 +313,7 @@ contract FlightSuretyApp {
     // Transfers eligible payout funds to insuree
     function pay()
     external
+    requireIsOperational
     {
         flightSuretyData.pay(msg.sender);
     }
@@ -429,6 +459,14 @@ contract FlightSuretyData {
         bool isFunded,
         uint256 votes);
 
+    function getAirlineStatus(uint256 idx)
+    external
+    view
+    returns (bool isRegistered,
+        bool isFunded,
+        uint256 votes,
+        address airlineAccount);
+
     function registeredAirlinesCount()
     public
     view
@@ -531,5 +569,15 @@ contract FlightSuretyData {
     external
     view
     returns (bool);
+
+    function getAirlineCount()
+    public
+    view
+    returns (uint256);
+
+//    function getAirlines()
+//    external
+//    view
+//    returns (address[50]);
 
 }

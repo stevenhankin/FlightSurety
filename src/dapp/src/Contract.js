@@ -37,6 +37,9 @@ const Contract = (props) => {
         const flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
         console.log("initialize", {owner});
 
+
+
+
         // For a given index, generate a Flight Registration callback
         const fundCallbackCreate = (idx) => {
             return (err) => {
@@ -58,6 +61,21 @@ const Contract = (props) => {
             if (error) {
                 alert(error)
             } else {
+
+                const meth = flightSuretyApp.methods;
+                console.log({meth});
+                flightSuretyApp.methods.getAirlines().call({from: owner}, (err, airlines) => {
+                    console.log('***')
+                    if (err) {
+                        console.error({err})
+                    } else {
+                        console.log({airlines})
+                    }
+                });
+
+                    // .then( airlines =>
+                //     console.log({airlines})
+                // );
 
                 setOwner(accts[0]);
 
