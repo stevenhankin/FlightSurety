@@ -162,8 +162,8 @@ const registerOracles = async () => {
 
 // Oracle submits a response
 const submitResponse = async (oracle, index,airline,flight,timestamp) => {
-    // Produces a random status code of either 0, 10, 20, 30, 40, 50
-    let statusCode = Math.floor(Math.random()*6)*10;
+    // Produces a random status code of either  20, 30, or 40
+    let statusCode = 10+(Math.floor(Math.random()*3)*10);
     try {
         console.log('Submitting...')
         await flightSuretyApp.methods.submitOracleResponse(index,airline,flight,timestamp, statusCode).send({ from: oracle, gas:"450000" });
@@ -204,8 +204,8 @@ const listenForRequests = async () => {
         if (error) {
             console.log(error);
         } else {
-            console.log('Status determined!!!');
-            console.log(event.returnValues);
+            console.log('Status determined:',event.returnValues.status);
+            // console.log(event.returnValues);
         }
 
     });

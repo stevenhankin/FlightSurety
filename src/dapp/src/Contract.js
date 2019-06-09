@@ -74,9 +74,6 @@ const Contract = (props) => {
         }
     };
 
-    const buyInsurance = () => {
-        alert('buy!')
-    };
 
     // On startup, initialise
     useEffect(() => {

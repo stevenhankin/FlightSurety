@@ -9,7 +9,7 @@ const InsuranceTab = (props) => {
     const {flightsuretyapp, passengers, flights} = props;
 
     const [passenger, setPassenger] = useState("");
-    const [credit, setCredit] = useState(0);
+    const [credit, setCredit] = useState("");
     const [flight, setFlight] = useState("");
     const [amount, setAmount] = useState("");
 
@@ -46,23 +46,30 @@ const InsuranceTab = (props) => {
     };
 
 
+    const updateCreditField = () => {
+        flightsuretyapp.methods
+            .getCredit()
+            .call({from: passenger}, (err, result) => {
+                if (err) {
+                    console.error(err)
+                } else {
+                    console.log({result})
+                    const intResult = parseInt(result);
+                    const intCredit = credit && parseInt(credit);
+                    if (intCredit != intResult) {
+                        console.log({credit})
+                        setCredit(intResult);
+                    }
+                }
+            });
+    }
+
     // Will retrieve credit for the selected passenger
-    // setInterval(() => {
-    //     flightsuretyapp.methods
-    //         .getCredit()
-    //         .call({from: passenger}, (err, result) => {
-    //             if (err) {
-    //                 console.error(err)
-    //             } else {
-    //                 const intResult = parseInt(result);
-    //                 const intCredit = parseInt(credit);
-    //                 if (intCredit != intResult) {
-    //                     console.log({intCredit,intResult})
-    //                     setCredit(intResult);
-    //                 }
-    //             }
-    //         });
-    // },500);
+    useEffect(() => {
+        console.log('hi')
+        updateCreditField();
+
+    });
 
     return <Row>
         <Col>
