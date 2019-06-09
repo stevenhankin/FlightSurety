@@ -131,7 +131,7 @@ const Contract = (props) => {
                             </Tab>
 
                             <Tab eventKey="profile" title="Book Insurance">
-                                <InsuranceTab  flights={flights}
+                                <InsuranceTab  flightsuretyapp={flightSuretyApp} flights={flights}
                                                passengers={passengers} />
                             </Tab>
 
