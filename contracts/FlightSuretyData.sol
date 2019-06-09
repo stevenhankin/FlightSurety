@@ -224,11 +224,10 @@ contract FlightSuretyData {
     }
 
 
-    // Used for testing
     function getCredit(address passenger)
     public
     view
-    requireContractOwner
+    requireAuthorizedCaller
     returns (uint256)
     {
         return passengerCredit[passenger];

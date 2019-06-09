@@ -1,4 +1,4 @@
-import React, {useState} from "react";
+import React, {useState, useEffect} from "react";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/es/Col";
 import Web3 from 'web3';
@@ -9,6 +9,7 @@ const InsuranceTab = (props) => {
     const {flightsuretyapp, passengers, flights} = props;
 
     const [passenger, setPassenger] = useState("");
+    const [credit, setCredit] = useState(0);
     const [flight, setFlight] = useState("");
     const [amount, setAmount] = useState("");
 
@@ -33,6 +34,23 @@ const InsuranceTab = (props) => {
     };
 
 
+    const requestFlightStatus= () => {
+
+    };
+
+    // Will retrieve credit for this passenger
+    useEffect(() => {
+        flightsuretyapp.methods
+            .getCredit()
+            .call({from: passenger}, (err, result) => {
+                if (err) {
+                    console.error(err)
+                } else {
+                    setCredit(parseFloat(result));
+                }
+            });
+    },[passenger]);
+
     return <Row>
         <Col>
             <div className="panel">
@@ -49,6 +67,8 @@ const InsuranceTab = (props) => {
                         }
                     </select>
                 </div>
+
+                <div className="passenger-credit">Passenger credit: {credit}</div>
 
                 <div className="input-group mb-3">
                     <div className="input-group-prepend">
@@ -80,6 +100,12 @@ const InsuranceTab = (props) => {
                         disabled={!passenger || !flight || !amount || parseFloat(amount) <= 0}>Buy
                     Insurance!
                 </button>
+
+                <button type="button" className="btn btn-dark"
+                        onClick={requestFlightStatus}
+                        disabled={ !flight }>Request Flight Status
+                </button>
+
             </div>
         </Col>
     </Row>

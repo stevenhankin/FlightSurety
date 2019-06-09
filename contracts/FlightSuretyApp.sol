@@ -332,6 +332,16 @@ contract FlightSuretyApp {
     }
 
 
+    // Get the current credit available
+    function getCredit()
+    public
+    view
+    returns (uint256)
+    {
+        return flightSuretyData.getCredit(msg.sender);
+    }
+
+
     /**
      * @dev Register a future flight for insuring.
      *
@@ -589,9 +599,9 @@ contract FlightSuretyData {
     view
     returns (uint256);
 
-    //    function getAirlines()
-    //    external
-    //    view
-    //    returns (address[50]);
+    function getCredit(address passenger)
+    public
+    view
+    returns (uint256);
 
 }
