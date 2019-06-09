@@ -15,7 +15,6 @@ const InsuranceTab = (props) => {
 
     console.log({passenger}, {flight}, {amount})
 
-
     const buyInsurance = () => {
         const _flight = JSON.parse(flight);
         console.log({amount, _flight})
@@ -26,30 +25,44 @@ const InsuranceTab = (props) => {
                 if (err) {
                     console.error(err)
                 } else {
-                    alert('hi')
-                    // setIsOperational(result);
-                    // console.log('isOperational: ', {err, result});
+                    alert('Payment accepted!');
                 }
             });
     };
 
 
     const requestFlightStatus= () => {
-
-    };
-
-    // Will retrieve credit for this passenger
-    useEffect(() => {
+        const _flight = JSON.parse(flight);
+        console.log({amount, _flight, passenger})
         flightsuretyapp.methods
-            .getCredit()
-            .call({from: passenger}, (err, result) => {
+            .fetchFlightStatus(_flight.airline, _flight.callSign, _flight.timestamp)
+            .send({from: passenger}, (err, result) => {
                 if (err) {
                     console.error(err)
                 } else {
-                    setCredit(parseFloat(result));
+                    alert('Flight status requested!')
                 }
             });
-    },[passenger]);
+    };
+
+
+    // Will retrieve credit for the selected passenger
+    // setInterval(() => {
+    //     flightsuretyapp.methods
+    //         .getCredit()
+    //         .call({from: passenger}, (err, result) => {
+    //             if (err) {
+    //                 console.error(err)
+    //             } else {
+    //                 const intResult = parseInt(result);
+    //                 const intCredit = parseInt(credit);
+    //                 if (intCredit != intResult) {
+    //                     console.log({intCredit,intResult})
+    //                     setCredit(intResult);
+    //                 }
+    //             }
+    //         });
+    // },500);
 
     return <Row>
         <Col>
@@ -68,7 +81,7 @@ const InsuranceTab = (props) => {
                     </select>
                 </div>
 
-                <div className="passenger-credit">Passenger credit: {credit}</div>
+                {/*<div className="passenger-credit">Passenger credit: {credit}</div>*/}
 
                 <div className="input-group mb-3">
                     <div className="input-group-prepend">
@@ -103,7 +116,7 @@ const InsuranceTab = (props) => {
 
                 <button type="button" className="btn btn-dark"
                         onClick={requestFlightStatus}
-                        disabled={ !flight }>Request Flight Status
+                        disabled={ !flight || !passenger}>Request Flight Status
                 </button>
 
             </div>

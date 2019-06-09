@@ -234,15 +234,6 @@ contract FlightSuretyApp {
             }
         }
     }
-    //    function getAirlineStatus(uint256 idx)
-    //    external
-    //    view
-    //    requireAuthorizedCaller
-    //    requireIsOperational
-    //    returns (bool isRegistered,
-    //        bool isFunded,
-    //        uint256 votes,
-    //        address airlineAccount)
 
     /**
      * Return status of specified airline
@@ -360,7 +351,7 @@ contract FlightSuretyApp {
 
 
     /**
-     * @dev Called after oracle has updated flight status
+     * For testing purposes
      *
      */
     function processFlightStatus
@@ -368,21 +359,17 @@ contract FlightSuretyApp {
         address airline,
         string flight,
         uint256 timestamp,
-        uint8 statusCode
+        uint8 statusCode,
+        uint8 multiplyBy,
+        uint8 divideBy,
+        uint8 payoutCode
     )
     external
     requireIsOperational
     {
-        flightSuretyData.processFlightStatus(airline, flight, timestamp, statusCode);
-        if (statusCode == STATUS_CODE_LATE_AIRLINE) {
-            /* To ADD 150% compensation using integers, can multiply by 1 and divide by 2
-               This approach can allow for any range of percentages by representing rationals
-             */
-            uint8 multiplyBy = 1;
-            uint8 divideBy = 2;
-            flightSuretyData.creditInsurees(airline, flight, timestamp, multiplyBy, divideBy);
-        }
+        flightSuretyData.processFlightStatus(airline, flight, timestamp, statusCode, multiplyBy, divideBy, payoutCode);
     }
+
 
     ////////////////////////////////////////////////////////////////
     // region ORACLE MANAGEMENT
@@ -438,7 +425,13 @@ contract FlightSuretyApp {
     external
     requireIsOperational
     {
-        flightSuretyData.submitOracleResponse(index, airline, flight, timestamp, statusCode, MIN_RESPONSES, msg.sender);
+        /* To ADD 150% compensation using integers, can multiply by 1 and divide by 2
+           This approach can allow for any range of percentages by representing rationals
+         */
+        uint8 multiplyBy = 1;
+        uint8 divideBy = 2;
+        flightSuretyData.submitOracleResponse(index, airline, flight, timestamp, statusCode, MIN_RESPONSES,
+            msg.sender, multiplyBy, divideBy, STATUS_CODE_LATE_AIRLINE);
     }
 
 
@@ -520,19 +513,11 @@ contract FlightSuretyData {
         address airline,
         string flight,
         uint256 timestamp,
-        uint8 statusCode
-    )
-    external;
-
-    function creditInsurees
-    (
-        address airline,
-        string flight,
-        uint256 timestamp,
-        uint256 multiplyBy,
-        uint256 divideBy
-    )
-    external;
+        uint8 statusCode,
+        uint8 multiplyBy,
+        uint8 divideBy,
+        uint8 payoutCode
+    ) public;
 
     function pay
     (address passenger
@@ -562,7 +547,10 @@ contract FlightSuretyData {
         uint256 timestamp,
         uint8 statusCode,
         uint256 min_responses,
-        address oracleAddr
+        address oracleAddr,
+        uint8 multiplyBy,
+        uint8 divideBy,
+        uint8 payoutCode
     )
     external;
 

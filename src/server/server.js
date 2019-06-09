@@ -11,6 +11,7 @@ const TEN_ETHER = Web3.utils.toWei("10");
 
 let config = Config['localhost'];
 let web3 = new Web3(new Web3.providers.WebsocketProvider(config.url.replace('http', 'ws')));
+// var web3 = new Web3(new Web3.providers.HttpProvider('http://localhost:7545'));
 web3.eth.defaultAccount = web3.eth.accounts[0];
 
 
@@ -26,7 +27,10 @@ const ORACLES_COUNT = 25;
 
 // Flights will keep a track of all scheduled
 // flights for the WebApp for convenience
-let flights=[];
+let flights = [];
+
+// Store accounts of Oracles for responding to flight status requests
+let oracles = [];
 
 
 /////////////
@@ -58,7 +62,7 @@ const registerAirlines = async () => {
                 // Register a new airline...
                 await flightSuretyApp
                     .methods
-                    .registerAirline(acc,companyName)
+                    .registerAirline(acc, companyName)
                     .send({from: firstAirline.airlineAccount, gas: "450000"});
                 await flightSuretyApp
                     .methods
@@ -76,12 +80,12 @@ const registerAirlines = async () => {
                 .methods
                 .getAirlineCount()
                 .call({from: accounts[0], gas: "450000"});
-            console.log('\nAll Airlines registered!',{total});
+            console.log('\nAll Airlines registered!', {total});
 
         } catch (e) {
-        console.log(e)
-        process.abort();
-    }
+            console.log(e)
+            process.abort();
+        }
     } catch (e) {
         console.error('** ouch', e)
     }
@@ -111,7 +115,7 @@ const registerFlights = async () => {
                     from: airline.airlineAccount,
                     gas: "450000"
                 });
-                flights.push({...flight,airline:airline.airlineAccount});
+                flights.push({...flight, airline: airline.airlineAccount});
             }
         }
         console.log({flights})
@@ -120,7 +124,6 @@ const registerFlights = async () => {
         process.abort();
     }
 };
-
 
 
 /////////////
@@ -143,6 +146,7 @@ const registerOracles = async () => {
                     .methods
                     .registerOracle()
                     .send({from: acc, value: fee, gas: "450000"});
+                oracles.push(acc);
                 accIdx++;
                 totalRegistered++;
             } catch (e) {
@@ -156,27 +160,69 @@ const registerOracles = async () => {
     }
 };
 
-registerAirlines()
-    .then(registerFlights)
-    .then(registerOracles)
-    .then(
+// Oracle submits a response
+const submitResponse = async (oracle, index,airline,flight,timestamp) => {
+    // Produces a random status code of either 0, 10, 20, 30, 40, 50
+    let statusCode = Math.floor(Math.random()*6)*10;
+    try {
+        console.log('Submitting...')
+        await flightSuretyApp.methods.submitOracleResponse(index,airline,flight,timestamp, statusCode).send({ from: oracle, gas:"450000" });
+        console.log(`${oracle} submitted code ${statusCode}`)
+    } catch (e) {
+        console.log(`Rejected Oracle ${oracle}`)
+    }
+};
+
+
+/////////////
+// If an OracleRequest is detected, make all Oracles attempt to service it
+/////////////
+const listenForRequests = async () => {
     // Listen for events
     flightSuretyData.events.OracleRequest({
         fromBlock: 0
     }, function (error, event) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Event!!!');
+            console.log(event.returnValues);
 
-        if (error) console.log(error);
-        console.log('Event!', event);
-        console.log(event.returnValues);
-    })
-);
+            const {index,airline,flight,timestamp} = event.returnValues;
 
+            for (let i = 0; i < oracles.length; i++) {
+                console.log(oracles[i]);
+                submitResponse(oracles[i], index,airline,flight,timestamp);
+            }
+        }
+
+    });
+
+    flightSuretyData.events.FlightStatusInfo({
+        fromBlock: 0
+    }, function (error, event) {
+        if (error) {
+            console.log(error);
+        } else {
+            console.log('Status determined!!!');
+            console.log(event.returnValues);
+        }
+
+    });
+
+};
+
+
+registerAirlines()
+    .then(registerFlights)
+    .then(registerOracles)
+    .then(listenForRequests);
+
+
+// Simple API to let client know what flights were setup
 const app = express();
 app.get('/api/flights', (req, res) => {
     res.json(flights);
-    // res.send({
-    //     message: 'An API for use with your Dapp!'
-    // })
 });
 
 

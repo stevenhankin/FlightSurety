@@ -61,8 +61,9 @@ yarn start
 
 **Finally access the application in a browser**
 
-`http://localhost:8000`
+`http://localhost:3001`
 
+(Port 3000 is reserved for the Server API)
 
 ## Deploy
 

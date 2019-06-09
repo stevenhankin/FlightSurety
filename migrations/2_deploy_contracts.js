@@ -22,7 +22,7 @@ module.exports = function (deployer) {
                     ]);
 
                     // App Contract needs to be added to map of authorized ones in Data Contract
-                    await instances[0].authorizeCaller(FlightSuretyApp.address);
+                    let result = await instances[0].authorizeCaller(FlightSuretyApp.address);
 
                     let config = {
                         localhost: {

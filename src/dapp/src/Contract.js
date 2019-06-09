@@ -1,4 +1,4 @@
-import React, {useState, useEffect} from 'react';
+import React, {useEffect, useState} from 'react';
 
 import Tabs from 'react-bootstrap/Tabs';
 import Tab from 'react-bootstrap/Tab';
@@ -8,22 +8,15 @@ import Config from './config.json';
 import Web3 from 'web3';
 import Container from "react-bootstrap/es/Container";
 import Row from "react-bootstrap/Row";
-// import Badge from "react-bootstrap/Badge";
 import Col from "react-bootstrap/es/Col";
-// import {Accordion, AccordionCollapse, AccordionToggle, Card} from "react-bootstrap";
 import InfoTab from "./InfoTab"
 import InsuranceTab from "./InsuranceTab";
 
 const axiosJS = require('axios');
 
-// import {connect} from "react-redux";
-// import {addFlight} from "./actions";
-
-
 const NETWORK = 'localhost'; // hardcoded for now
 const config = Config[NETWORK];
 const web3 = (new Web3(new Web3.providers.HttpProvider(config.url)));
-const TEN_ETH = web3.utils.toWei("10");
 const flightSuretyApp = new web3.eth.Contract(FlightSuretyApp.abi, config.appAddress);
 
 
@@ -130,13 +123,9 @@ const Contract = (props) => {
                                          passengers={passengers}/>
                             </Tab>
 
-                            <Tab eventKey="profile" title="Book Insurance">
+                            <Tab eventKey="profile" title="Insurance">
                                 <InsuranceTab  flightsuretyapp={flightSuretyApp} flights={flights}
                                                passengers={passengers} />
-                            </Tab>
-
-                            <Tab eventKey="contact" title="Flight Status" disabled>
-                                <div></div>
                             </Tab>
                         </Tabs>
                     </Col>

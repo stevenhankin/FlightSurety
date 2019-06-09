@@ -138,7 +138,7 @@ contract FlightSuretyData {
     */
     modifier requireAuthorizedCaller()
     {
-        require(authorizedAppContracts[msg.sender], "Caller is not an authorized contract");
+        require(authorizedAppContracts[msg.sender] || msg.sender == address(this), "Caller is not an authorized contract");
         _;
     }
 
@@ -227,7 +227,6 @@ contract FlightSuretyData {
     function getCredit(address passenger)
     public
     view
-    requireAuthorizedCaller
     returns (uint256)
     {
         return passengerCredit[passenger];
@@ -401,7 +400,7 @@ contract FlightSuretyData {
         uint256 multiplyBy,
         uint256 divideBy
     )
-    external
+    internal
     requireAuthorizedCaller
     requireIsOperational
     {
@@ -429,14 +428,21 @@ contract FlightSuretyData {
         address airline,
         string flight,
         uint256 timestamp,
-        uint8 statusCode
+        uint8 statusCode,
+        uint8 multiplyBy,
+        uint8 divideBy,
+        uint8 payoutCode
     )
-    external
+    public
     requireAuthorizedCaller
     requireIsOperational
     {
         bytes32 flightKey = getFlightKey(airline, flight, timestamp);
         flights[flightKey].statusCode = statusCode;
+
+        if (statusCode == payoutCode) {
+            creditInsurees(airline, flight, timestamp, multiplyBy, divideBy);
+        }
     }
 
 
@@ -626,6 +632,8 @@ contract FlightSuretyData {
     // For the response to be accepted, there must be a pending request that is open
     // and matches one of the three Indexes randomly assigned to the oracle at the
     // time of registration (i.e. uninvited oracles are not welcome)
+    //
+    // Multiple/divide numbers provide a method to get percentage amounts of credit
     function submitOracleResponse
     (
         uint8 index,
@@ -634,7 +642,10 @@ contract FlightSuretyData {
         uint256 timestamp,
         uint8 statusCode,
         uint256 min_responses,
-        address oracleAddr
+        address oracleAddr,
+        uint8 multiplyBy,
+        uint8 divideBy,
+        uint8 payoutCode
     )
     external
     requireIsOperational
@@ -655,7 +666,7 @@ contract FlightSuretyData {
             emit FlightStatusInfo(airline, flight, timestamp, statusCode);
 
             // Handle flight status as appropriate
-            this.processFlightStatus(airline, flight, timestamp, statusCode);
+            this.processFlightStatus(airline, flight, timestamp, statusCode, multiplyBy, divideBy, payoutCode);
         }
     }
 
