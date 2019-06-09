@@ -8,9 +8,10 @@ import Config from './config.json';
 import Web3 from 'web3';
 import Container from "react-bootstrap/es/Container";
 import Row from "react-bootstrap/Row";
-import Badge from "react-bootstrap/Badge";
+// import Badge from "react-bootstrap/Badge";
 import Col from "react-bootstrap/es/Col";
-import {Accordion, AccordionCollapse, AccordionToggle, Card} from "react-bootstrap";
+// import {Accordion, AccordionCollapse, AccordionToggle, Card} from "react-bootstrap";
+import InfoTab from "./InfoTab"
 
 const axiosJS = require('axios');
 
@@ -118,112 +119,21 @@ const Contract = (props) => {
                 <Row>
                     <Col>
                         <Tabs defaultActiveKey="info" id="uncontrolled-tab-example">
+
                             <Tab eventKey="info" title="Info">
-
-                                <div className="panel">
-
-
-                                    <Row>
-                                        <Col xs={1}>
-                                                Service
-                                        </Col>
-                                        <Col>
-                                            <Badge variant={isOperational ? "success" : "danger"}>
-                                                {isOperational ? "Operational" : "Unavailable"}
-                                            </Badge>
-                                        </Col>
-                                    </Row>
-
-                                    <Row>
-                                        <Col>
-                                            <h4>Click the items below for details</h4>
-                                        </Col></Row>
-                                    <Row>
-                                        <Col>
-
-                                            <Accordion defaultActiveKey="0">
-                                                <Card>
-                                                    <Accordion.Toggle><h4>Airlines</h4>
-                                                        <badge className="badge badge-primary info-badge">
-                                                            {airlines && airlines.length}
-                                                        </badge>
-                                                    </Accordion.Toggle>
-                                                    <Accordion.Collapse>
-                                                        <Card>
-                                                            {
-                                                                airlines.map((airline, idx) =>
-                                                                    <div key={airline.airlineAccount}>
-                                                                        {airline.companyName}
-                                                                        ({airline.airlineAccount
-                                                                    && airline.airlineAccount.substring(0, 8)}...)
-                                                                    </div>)
-                                                            }
-                                                        </Card>
-                                                    </Accordion.Collapse>
-                                                </Card>
-                                            </Accordion>
-                                        </Col>
-
-                                        <Col>
-
-                                            <Accordion defaultActiveKey="0">
-                                                <Card>
-                                                    <Accordion.Toggle><h4>Flights</h4>
-                                                        <badge className="badge badge-primary info-badge">
-                                                            {flights && flights.length}
-                                                        </badge>
-                                                    </Accordion.Toggle>
-                                                    <Accordion.Collapse>
-                                                        <Card>
-                                                            {
-                                                                flights && flights.map((flight, idx) =>
-                                                                    <div key={idx}>
-                                                                        {flight.callSign} @ {new Date(flight.timestamp).toLocaleString()}
-                                                                    </div>)
-                                                            }
-                                                        </Card>
-                                                    </Accordion.Collapse>
-                                                </Card>
-                                            </Accordion>
-                                        </Col>
-
-                                        <Col>
-
-                                            <Accordion defaultActiveKey="0">
-                                                <Card>
-                                                    <Accordion.Toggle><h4>Passengers</h4>
-                                                        <badge className="badge badge-primary info-badge">
-                                                            {passengers && passengers.length}
-                                                        </badge>
-                                                    </Accordion.Toggle>
-                                                    <Accordion.Collapse>
-                                                        <Card>
-                                                            {
-                                                                passengers && passengers.map((passenger, idx) => <div
-                                                                    key={idx}>{passenger.substring(0, 15)}...</div>)
-                                                            }
-                                                        </Card>
-                                                    </Accordion.Collapse>
-                                                </Card>
-                                            </Accordion>
-                                        </Col>
-                                    </Row>
-                                </div>
+                                <InfoTab  isoperational={isOperational.toString()} airlines={airlines}  flights={flights} passengers={passengers} />
                             </Tab>
+
                             <Tab eventKey="profile" title="Book Insurance">
-
-
                                 <Row>
                                     <Col>
-
                                         <div className="panel">
-
                                             <div className="input-group mb-3">
                                                 <div className="input-group-prepend">
                                                     <label className="input-group-text">Passenger</label>
                                                 </div>
                                                 <select className="custom-select">
-                                                    <option selected>Choose account...</option>
+                                                    <option >Choose account...</option>
                                                     {
                                                         passengers && passengers.map((passenger, idx) =>
                                                             <option value={passenger}>{passenger}</option>
@@ -237,7 +147,7 @@ const Contract = (props) => {
                                                     <label className="input-group-text">Flight</label>
                                                 </div>
                                                 <select className="custom-select">
-                                                    <option selected>Choose flight...</option>
+                                                    <option >Choose flight...</option>
                                                     {
                                                         flights && flights.map((flight, idx) =>
                                                             <option
