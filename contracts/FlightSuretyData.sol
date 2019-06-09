@@ -28,6 +28,7 @@ contract FlightSuretyData {
 
     struct Airline {
         address airlineAccount;
+        string companyName;
         bool isRegistered;
         bool isFunded;
         uint256 votes;
@@ -101,7 +102,7 @@ contract FlightSuretyData {
     {
         require(firstAirline != address(0), 'Must specify the first airline to register when deploying contract');
         contractOwner = msg.sender;
-        airlines[airlineCount++] = Airline({airlineAccount : firstAirline, isRegistered : true, isFunded : false, votes : 0});
+        airlines[airlineCount++] = Airline({airlineAccount : firstAirline, companyName : "British Airways", isRegistered : true, isFunded : false, votes : 0});
     }
 
     /********************************************************************************************/
@@ -141,14 +142,6 @@ contract FlightSuretyData {
         _;
     }
 
-    /**
-    * @dev Modifier requires the Airline that is calling is already funded
-    */
-    modifier requireIsFundedAirline(address airline)
-    {
-        require(isFundedAirline(airline), "Airline is not funded");
-        _;
-    }
 
 
 
@@ -279,18 +272,13 @@ contract FlightSuretyData {
     returns (bool isRegistered,
         bool isFunded,
         uint256 votes,
-        address airlineAccount)
+        address airlineAccount,
+        string companyName)
     {
-//        bool isRegistered;
-//        bool isFunded;
-//        uint256 votes;
-         airlineAccount = airlines[idx].airlineAccount;
-         (isRegistered,
-        isFunded,
-        votes) = getAirlineStatus(airlineAccount);
-        return (isRegistered,
-        isFunded,
-        votes, airlineAccount);
+        airlineAccount = airlines[idx].airlineAccount;
+        companyName = airlines[idx].companyName;
+        (isRegistered, isFunded, votes) = getAirlineStatus(airlineAccount);
+        return (isRegistered, isFunded, votes, airlineAccount, companyName);
     }
 
 
@@ -301,13 +289,13 @@ contract FlightSuretyData {
      *
      */
     function addAirline
-    (address _airline, bool isRegistered, bool isFunded, uint8 votes
+    (address airlineAccount, string companyName, bool isRegistered, bool isFunded, uint8 votes
     )
     external
     requireAuthorizedCaller
     requireIsOperational
     {
-        airlines[airlineCount++] = Airline({airlineAccount : _airline, isRegistered : isRegistered, isFunded : isFunded, votes : votes});
+        airlines[airlineCount++] = Airline({airlineAccount : airlineAccount, companyName : companyName, isRegistered : isRegistered, isFunded : isFunded, votes : votes});
     }
 
     /**
@@ -358,7 +346,7 @@ contract FlightSuretyData {
     returns (uint256)
     {
         uint256 registered = 0;
-        for (uint i=0; i<airlineCount; i++) {
+        for (uint i = 0; i < airlineCount; i++) {
             if (airlines[i].isRegistered) {
                 registered++;
             }
@@ -374,7 +362,6 @@ contract FlightSuretyData {
     external
     requireIsOperational
     requireAuthorizedCaller
-    requireIsFundedAirline(_airline)
     {
         bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
         flights[flightKey] = Flight({airline : _airline, departureTimestamp : _timestamp, statusCode : 0});
@@ -395,7 +382,6 @@ contract FlightSuretyData {
     payable
     requireIsOperational
     requireAuthorizedCaller
-    requireIsFundedAirline(_airline)
     {
         bytes32 flightKey = getFlightKey(_airline, _flight, _timestamp);
         Flight memory flight = flights[flightKey];
@@ -585,23 +571,23 @@ contract FlightSuretyData {
     }
 
 
-//    /**
-//     * Return an array of the airline accounts
-//     * which need to be extracted from the airlines struct
-//     */
-//    function getAirlines()
-//    external
-//    view
-//    returns (address[50])
-//    {
-//        address[50] memory acc;
-//        uint256 i = 0;
-//        while (i < airlineCount) {
-//            acc[i] = airlines[i].airlineAccount;
-//            i++;
-//        }
-//        return acc;
-//    }
+    //    /**
+    //     * Return an array of the airline accounts
+    //     * which need to be extracted from the airlines struct
+    //     */
+    //    function getAirlines()
+    //    external
+    //    view
+    //    returns (address[50])
+    //    {
+    //        address[50] memory acc;
+    //        uint256 i = 0;
+    //        while (i < airlineCount) {
+    //            acc[i] = airlines[i].airlineAccount;
+    //            i++;
+    //        }
+    //        return acc;
+    //    }
 
 
     // Register an oracle with the contract

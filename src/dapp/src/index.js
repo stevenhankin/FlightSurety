@@ -1,7 +1,7 @@
 import React from 'react';
 import ReactDOM from 'react-dom';
-import './flightsurety.css';
 import App from './App';
+import './flightsurety.css';
 import * as serviceWorker from './serviceWorker';
 import {configureStore} from 'redux-starter-kit'
 import {Provider} from 'react-redux';

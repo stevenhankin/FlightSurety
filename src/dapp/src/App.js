@@ -1,5 +1,4 @@
 import React from 'react';
-import './flightsurety.css';
 import Contract from './Contract';
 
 

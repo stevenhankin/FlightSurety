@@ -201,7 +201,7 @@ contract FlightSuretyApp {
      *
      */
     function registerAirline
-    (address airline
+    (address airline, string companyName
     )
     external
     requireIsOperational
@@ -212,7 +212,9 @@ contract FlightSuretyApp {
         address voter = msg.sender;
         if (_registeredAirlines < 4) {
             // Votes are not necessary for initial 4 airlines
-            flightSuretyData.addAirline(airline, true, false, 0);
+            // so automatically make them with registered status
+            // BUT they are not yet funded
+            flightSuretyData.addAirline(airline, companyName, true, false, 0);
         } else {
             uint256 idx = flightSuretyData.findAirline(airline);
             if (idx < flightSuretyData.getAirlineCount()) {
@@ -225,22 +227,22 @@ contract FlightSuretyApp {
                 }
             } else {
                 // First request - Start with 1 vote and not yet registered
-                flightSuretyData.addAirline(airline, false, false, 0);
+                flightSuretyData.addAirline(airline, companyName, false, false, 0);
                 // Record vote
                 idx = flightSuretyData.findAirline(airline);
                 flightSuretyData.registerVote(idx, voter);
             }
         }
     }
-//    function getAirlineStatus(uint256 idx)
-//    external
-//    view
-//    requireAuthorizedCaller
-//    requireIsOperational
-//    returns (bool isRegistered,
-//        bool isFunded,
-//        uint256 votes,
-//        address airlineAccount)
+    //    function getAirlineStatus(uint256 idx)
+    //    external
+    //    view
+    //    requireAuthorizedCaller
+    //    requireIsOperational
+    //    returns (bool isRegistered,
+    //        bool isFunded,
+    //        uint256 votes,
+    //        address airlineAccount)
 
     /**
      * Return status of specified airline
@@ -248,20 +250,21 @@ contract FlightSuretyApp {
     function getAirlineByIdx(uint256 idx)
     external
     view
-            returns (bool isRegistered,
-                bool isFunded,
-                uint256 votes,
-                address airlineAccount)
+    returns (bool isRegistered,
+        bool isFunded,
+        uint256 votes,
+        address airlineAccount,
+        string companyName)
     {
-//        retAcc = new address[](50);
+        //        retAcc = new address[](50);
         return flightSuretyData.getAirlineStatus(idx);
-//        uint256 airlineCount = flightSuretyData.getAirlineCount();
-//        uint256 i = 0;
-//        while (i<airlineCount && acc[i] != 0) {
-//            retAcc.push(acc[i]);
-//        }
-//        retAcc.length=i;
-//        return retAcc;
+        //        uint256 airlineCount = flightSuretyData.getAirlineCount();
+        //        uint256 i = 0;
+        //        while (i<airlineCount && acc[i] != 0) {
+        //            retAcc.push(acc[i]);
+        //        }
+        //        retAcc.length=i;
+        //        return retAcc;
     }
 
 
@@ -458,7 +461,7 @@ contract FlightSuretyData {
     returns (bool);
 
     function addAirline
-    (address _airline, bool isRegistered, bool isFunded, uint8 votes
+    (address airlineAccount, string companyName, bool isRegistered, bool isFunded, uint8 votes
     )
     external;
 
@@ -475,7 +478,8 @@ contract FlightSuretyData {
     returns (bool isRegistered,
         bool isFunded,
         uint256 votes,
-        address airlineAccount);
+        address airlineAccount,
+        string companyName);
 
     function registeredAirlinesCount()
     public
@@ -585,9 +589,9 @@ contract FlightSuretyData {
     view
     returns (uint256);
 
-//    function getAirlines()
-//    external
-//    view
-//    returns (address[50]);
+    //    function getAirlines()
+    //    external
+    //    view
+    //    returns (address[50]);
 
 }

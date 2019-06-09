@@ -45,3 +45,22 @@ input {
     margin-top: 400px;
     background-color: white;
 }
+
+.info-badge {
+    margin-left: 6px;
+    vertical-align: top;
+    font-size: small;
+    padding: 4px;
+}
+
+h4 {
+    display: inline;
+}
+
+.panel {
+    padding: 20px;
+}
+
+.panel .row {
+    margin-top: 20px;
+}

@@ -1,8 +1,9 @@
-var Test = require('../config/testConfig.js');
+const Test = require('../config/testConfig.js');
+const faker = require('faker');
 
 // Arbitrary constants for testing
 const FLIGHT_NAME = "BA101";
-const FLIGHT_TIMESTAMP = parseInt(Date.now() + 100000 +  Math.random() * 100000, 10);
+const FLIGHT_TIMESTAMP = parseInt(Date.now() + 100000 + Math.random() * 100000, 10);
 const ONE_ETHER = web3.utils.toWei("1");
 const THREE_ETHER = web3.utils.toWei("3");
 const NINE_ETHER = web3.utils.toWei("9");
@@ -16,7 +17,7 @@ contract('Flight Surety Tests', async (accounts) => {
     const oracle = accounts[9];
 
 
-    var config;
+    let config;
 
     before('setup contract', async () => {
         config = await Test.Config(accounts);
@@ -80,7 +81,7 @@ contract('Flight Surety Tests', async (accounts) => {
         await config.flightSuretyData.setOperatingStatus(false);
         let reverted = false;
         try {
-            await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(newAirline, faker.company.companyName(),  {from: config.firstAirline});
         } catch (e) {
             reverted = true;
         }
@@ -91,14 +92,12 @@ contract('Flight Surety Tests', async (accounts) => {
 
 
     it('(airline) cannot register an Airline using registerAirline() if it is not funded', async () => {
-
         // ARRANGE
         let newAirline = accounts[2];
         let reverted = false;
-
         // ACT
         try {
-            await config.flightSuretyApp.registerAirline(newAirline, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(newAirline, faker.company.companyName(), {from: config.firstAirline});
         } catch (e) {
             reverted = true;
         }
@@ -185,7 +184,7 @@ contract('Flight Surety Tests', async (accounts) => {
         const airline2 = accounts[2];
         // ACT
         try {
-            await config.flightSuretyApp.registerAirline(airline2, {from: config.firstAirline, gas: 100000});
+            await config.flightSuretyApp.registerAirline(airline2, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
         } catch (e) {
             console.error("Ooops - unexpected error!", {e})
         }
@@ -202,8 +201,8 @@ contract('Flight Surety Tests', async (accounts) => {
         const airline4 = accounts[4];
         // ACT
         try {
-            await config.flightSuretyApp.registerAirline(airline3, {from: config.firstAirline});
-            await config.flightSuretyApp.registerAirline(airline4, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline3, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
+            await config.flightSuretyApp.registerAirline(airline4, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
         } catch (e) {
             console.error("Ooops - unexpected error!", {e})
         }
@@ -215,15 +214,22 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
+    it('(4 airlines) contract should be aware of total number of airlines', async () => {
+        // ACT
+        let totalAirlines = await config.flightSuretyData.getAirlineCount.call();
+        //ASSERT
+        assert.equal(totalAirlines, 4, "Contract should keep track of total number of airlines");
+    });
+
+
     it('(Multiparty Consensus, >4 airlines) can request to register fifth airline, but will not initially succeed (minimum votes required)', async () => {
         // ARRANGE
         let result = {};
         const num = await config.flightSuretyApp.registeredAirlinesCount();
         assert.equal(num.toNumber(), 4, 'At this point there should be 4 registered airlines (from previous steps)');
-        
         // ACT
         try {
-            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
             result = await config.flightSuretyApp.getAirlineStatus(airline5);
         } catch (e) {
             console.error("Ooops - unexpected error!", {e})
@@ -237,13 +243,13 @@ contract('Flight Surety Tests', async (accounts) => {
     it('(airline) cannot repeatedly have vote counted for same airline', async () => {
         // ARRANGE
         let result = {};
-        
+
         let reverted = false;
         // ACT
         try {
-            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
-            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
-            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
             result = await config.flightSuretyApp.getAirlineStatus(airline5);
         } catch (e) {
             reverted = true;
@@ -255,16 +261,16 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(airline) cannot repeatedly have vote counted for same airline', async () => {
         // ARRANGE
-        
+
         let reverted = false;
         let result = await config.flightSuretyApp.getAirlineStatus(airline5);
         const initialVote = result.votes.toNumber();
 
         // ACT
         try {
-            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
-            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
-            await config.flightSuretyApp.registerAirline(airline5, {from: config.firstAirline});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: config.firstAirline, gas: 200000});
         } catch (e) {
             reverted = true;
         }
@@ -281,14 +287,14 @@ contract('Flight Surety Tests', async (accounts) => {
     it('(Multiparty Consensus) can register a fifth airline if it has not yet voted (2 of 4 votes) ', async () => {
         // ARRANGE
         let result = {};
-        
+
 
         // ACT
         try {
             // Fund airline 2..
             await config.flightSuretyApp.fund({from: accounts[2], value: TEN_ETHER});
             // ..before attempting to register another airline
-            await config.flightSuretyApp.registerAirline(airline5, {from: accounts[2]});
+            await config.flightSuretyApp.registerAirline(airline5, faker.company.companyName(), {from: accounts[2], gas: 200000});
             result = await config.flightSuretyApp.getAirlineStatus(airline5);
         } catch (e) {
             console.error("Ooops - unexpected error!", {e})
@@ -302,13 +308,13 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(Airline Ante) fifth airline (registered) cannot participate when unfunded ', async () => {
         // ARRANGE
-        
+
         const airline6 = accounts[6];
         let reverted = false;
 
         // ACT
         try {
-            await config.flightSuretyApp.registerAirline(airline6, {from: airline5});
+            await config.flightSuretyApp.registerAirline(airline6, faker.company.companyName(), {from: airline5, gas: 200000});
         } catch (e) {
             reverted = true;
         }
@@ -320,7 +326,6 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(Airline Ante) fifth airline (registered, funded) can participate once funded ', async () => {
         // ARRANGE
-        
         const airline6 = accounts[6];
         let reverted = false;
 
@@ -328,7 +333,7 @@ contract('Flight Surety Tests', async (accounts) => {
         try {
             // Fund airline 5 so that it can participate..
             await config.flightSuretyApp.fund({from: airline5, value: TEN_ETHER});
-            await config.flightSuretyApp.registerAirline(airline6, {from: airline5});
+            await config.flightSuretyApp.registerAirline(airline6,faker.company.companyName(), {from: airline5, gas: 200000});
         } catch (e) {
             reverted = true;
             console.error("Ooops - unexpected error!", {e})
@@ -339,11 +344,8 @@ contract('Flight Surety Tests', async (accounts) => {
     });
 
 
-
     it('(Flight) a funded airline can add a flight schedule ', async () => {
         // ARRANGE
-        
-
         let reverted = false;
 
         // ACT
@@ -361,12 +363,14 @@ contract('Flight Surety Tests', async (accounts) => {
 
     it('(Passenger Payment) can pay up to 1 ether for purchasing flight insurance', async () => {
         // ARRANGE
-
         let reverted = false;
 
         // ACT
         try {
-            await config.flightSuretyApp.buy(airline5, FLIGHT_NAME, FLIGHT_TIMESTAMP, {from: passenger, value: THREE_ETHER});
+            await config.flightSuretyApp.buy(airline5, FLIGHT_NAME, FLIGHT_TIMESTAMP, {
+                from: passenger,
+                value: THREE_ETHER
+            });
         } catch (e) {
             reverted = true;
             console.error("Ooops - unexpected error!", {e})
@@ -389,7 +393,7 @@ contract('Flight Surety Tests', async (accounts) => {
         try {
             // "passenger was insured in a previous test case"
             const result = await config.flightSuretyData.getCredit(passenger, {from: config.owner});
-            totalCredit = web3.utils.fromWei(result,'ether');
+            totalCredit = web3.utils.fromWei(result, 'ether');
         } catch (e) {
             reverted = true;
             console.error("Ooops - unexpected error!", {e})
@@ -405,13 +409,15 @@ contract('Flight Surety Tests', async (accounts) => {
         // ARRANGE
         let reverted = false;
         let totalCreditEth;
-        const before = web3.utils.fromWei(await web3.eth.getBalance(passenger),'ether');;
+        const before = web3.utils.fromWei(await web3.eth.getBalance(passenger), 'ether');
+        ;
 
         // ACT
         try {
             // "passenger was Credited in a previous test case"
             await config.flightSuretyApp.pay({from: passenger});
-            const after = web3.utils.fromWei(await web3.eth.getBalance(passenger),'ether');;
+            const after = web3.utils.fromWei(await web3.eth.getBalance(passenger), 'ether');
+            ;
             totalCreditEth = after - before;
         } catch (e) {
             reverted = true;
@@ -422,8 +428,6 @@ contract('Flight Surety Tests', async (accounts) => {
         assert.equal(reverted, false, "A passenger should be credited if an airline causes a delay");
         assert.isBelow(1.5 - totalCreditEth, 0.01, "Passenger should receive almost 1.5 Ether for a 1 Ether insurance (minus gas costs)");
     });
-
-
 
 
 });
