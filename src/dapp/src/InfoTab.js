@@ -1,10 +1,10 @@
-import Tab from "react-bootstrap/Tab";
+import React from "react";
+// import Tab from "react-bootstrap/Tab";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/es/Col";
 import Badge from "react-bootstrap/Badge";
 import {Accordion, Card} from "react-bootstrap";
 // import Tabs from "react-bootstrap/Tabs";
-import React from "react";
 
 
 const InfoTab = (props) => {
@@ -29,9 +29,9 @@ const InfoTab = (props) => {
                     <Accordion defaultActiveKey="0">
                         <Card>
                             <Accordion.Toggle eventKey="0"><h4>Airlines</h4>
-                                <badge className="badge badge-primary info-badge">
+                                <Badge className="badge badge-primary info-badge">
                                     {airlines && airlines.length}
-                                </badge>
+                                </Badge>
                             </Accordion.Toggle>
                             <Accordion.Collapse eventKey="0">
                                 <Card>
@@ -53,9 +53,9 @@ const InfoTab = (props) => {
                     <Accordion defaultActiveKey="0">
                         <Card>
                             <Accordion.Toggle eventKey="0"><h4>Flights</h4>
-                                <badge className="badge badge-primary info-badge">
+                                <Badge className="badge badge-primary info-badge">
                                     {flights && flights.length}
-                                </badge>
+                                </Badge>
                             </Accordion.Toggle>
                             <Accordion.Collapse eventKey="0">
                                 <Card>
@@ -75,9 +75,9 @@ const InfoTab = (props) => {
                     <Accordion defaultActiveKey="0">
                         <Card>
                             <Accordion.Toggle eventKey="0"><h4>Passengers</h4>
-                                <badge className="badge badge-primary info-badge">
+                                <Badge className="badge badge-primary info-badge">
                                     {passengers && passengers.length}
-                                </badge>
+                                </Badge>
                             </Accordion.Toggle>
                             <Accordion.Collapse eventKey="0">
                                 <Card>

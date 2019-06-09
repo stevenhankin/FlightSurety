@@ -12,6 +12,7 @@ import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/es/Col";
 // import {Accordion, AccordionCollapse, AccordionToggle, Card} from "react-bootstrap";
 import InfoTab from "./InfoTab"
+import InsuranceTab from "./InsuranceTab";
 
 const axiosJS = require('axios');
 
@@ -80,6 +81,10 @@ const Contract = (props) => {
         }
     };
 
+    const buyInsurance = () => {
+        alert('buy!')
+    };
+
     // On startup, initialise
     useEffect(() => {
         console.log({config}, {web3});
@@ -121,56 +126,15 @@ const Contract = (props) => {
                         <Tabs defaultActiveKey="info" id="uncontrolled-tab-example">
 
                             <Tab eventKey="info" title="Info">
-                                <InfoTab  isoperational={isOperational.toString()} airlines={airlines}  flights={flights} passengers={passengers} />
+                                <InfoTab isoperational={isOperational.toString()} airlines={airlines} flights={flights}
+                                         passengers={passengers}/>
                             </Tab>
 
                             <Tab eventKey="profile" title="Book Insurance">
-                                <Row>
-                                    <Col>
-                                        <div className="panel">
-                                            <div className="input-group mb-3">
-                                                <div className="input-group-prepend">
-                                                    <label className="input-group-text">Passenger</label>
-                                                </div>
-                                                <select className="custom-select">
-                                                    <option >Choose account...</option>
-                                                    {
-                                                        passengers && passengers.map((passenger, idx) =>
-                                                            <option value={passenger}>{passenger}</option>
-                                                        )
-                                                    }
-                                                </select>
-                                            </div>
-
-                                            <div className="input-group mb-3">
-                                                <div className="input-group-prepend">
-                                                    <label className="input-group-text">Flight</label>
-                                                </div>
-                                                <select className="custom-select">
-                                                    <option >Choose flight...</option>
-                                                    {
-                                                        flights && flights.map((flight, idx) =>
-                                                            <option
-                                                                value={idx}>{flight.callSign} @ {new Date(flight.timestamp).toLocaleString()}</option>
-                                                        )
-                                                    }
-                                                </select>
-                                            </div>
-
-                                            <div className="input-group mb-3">
-                                                <div className="input-group-prepend">
-                                                    <span className="input-group-text">Pay Ξ</span>
-                                                </div>
-                                                <input type="text" className="form-control"
-                                                       aria-label="Amount (to the nearest dollar)"/>
-                                            </div>
-
-                                            <button type="button" className="btn btn-primary">Buy Insurance!</button>
-                                        </div>
-                                    </Col>
-                                </Row>
-
+                                <InsuranceTab  flights={flights}
+                                               passengers={passengers} />
                             </Tab>
+
                             <Tab eventKey="contact" title="Flight Status" disabled>
                                 <div></div>
                             </Tab>
