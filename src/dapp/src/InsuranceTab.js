@@ -1,42 +1,37 @@
-import React,{useState} from "react";
+import React, {useState} from "react";
 import Row from "react-bootstrap/Row";
 import Col from "react-bootstrap/es/Col";
-import Tab from "react-bootstrap/Tab";
+import Web3 from 'web3';
 
 
 const InsuranceTab = (props) => {
 
     const {flightsuretyapp, passengers, flights} = props;
-    const [passenger,setPassenger] = useState("");
-    const [flight,setFlight] = useState("");
-    const [amount,setAmount] = useState("0");
 
-    console.log({passenger},{flight},{amount})
+    const [passenger, setPassenger] = useState("");
+    const [flight, setFlight] = useState("");
+    const [amount, setAmount] = useState("");
+
+    console.log({passenger}, {flight}, {amount})
+
 
     const buyInsurance = () => {
-      console.log({amount})
-
-
-        // function buy
-        // (address passenger,
-        //     address _airline,
-        //     string _flight,
-        //     uint256 _timestamp
-
-        /*
+        const _flight = JSON.parse(flight);
+        console.log({amount, _flight})
+        const weiValue = Web3.utils.toWei(amount, 'ether');
         flightsuretyapp.methods
-            .buy()
-            .call({from: owner}, (err, result) => {
+            .buy(_flight.airline, _flight.callSign, _flight.timestamp)
+            .send({from: passenger, value: weiValue, gas: "450000"}, (err, result) => {
                 if (err) {
                     console.error(err)
                 } else {
-                    setIsOperational(result);
-                    console.log('isOperational: ', {err, result});
+                    alert('hi')
+                    // setIsOperational(result);
+                    // console.log('isOperational: ', {err, result});
                 }
             });
-            */
-
     };
+
 
     return <Row>
         <Col>
@@ -45,7 +40,7 @@ const InsuranceTab = (props) => {
                     <div className="input-group-prepend">
                         <label className="input-group-text">Passenger</label>
                     </div>
-                    <select className="custom-select" onChange={(e)=>setPassenger(e.target.value)}>
+                    <select className="custom-select" onChange={(e) => setPassenger(e.target.value)}>
                         <option>Choose account...</option>
                         {
                             passengers && passengers.map((passenger, idx) =>
@@ -59,12 +54,12 @@ const InsuranceTab = (props) => {
                     <div className="input-group-prepend">
                         <label className="input-group-text">Flight</label>
                     </div>
-                    <select className="custom-select"  onChange={(e)=>setFlight(e.target.value)}>
+                    <select className="custom-select" onChange={(e) => setFlight(e.target.value)}>
                         <option>Choose flight...</option>
                         {
                             flights && flights.map((flight, idx) =>
                                 <option
-                                    value={idx}>{flight.callSign} @ {new Date(flight.timestamp).toLocaleString()}</option>
+                                    value={JSON.stringify(flight)}>{flight.callSign} @ {new Date(flight.timestamp).toLocaleString()}</option>
                             )
                         }
                     </select>
@@ -75,19 +70,20 @@ const InsuranceTab = (props) => {
                         <span className="input-group-text">Pay Ξ</span>
                     </div>
                     <input type="text" className="form-control"
-                           aria-label="Amount (to the nearest dollar)"
-                           value={amount} onChange={(e)=>setAmount(e.target.value)}
+                           aria-label="Amount (in Ether)"
+                           value={amount} onChange={(e) => setAmount(e.target.value)}
+                           placeholder="Amount (in Ether)"
                     />
                 </div>
 
-                <button type="button" className="btn btn-primary" onClick={buyInsurance} disabled={!passenger || !flight || !amount || parseFloat(amount)<=0 }>Buy
+                <button type="button" className="btn btn-primary" onClick={buyInsurance}
+                        disabled={!passenger || !flight || !amount || parseFloat(amount) <= 0}>Buy
                     Insurance!
                 </button>
             </div>
         </Col>
     </Row>
-
-
 };
+
 
 export default InsuranceTab;
