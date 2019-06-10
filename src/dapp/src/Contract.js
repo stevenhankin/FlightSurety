@@ -29,56 +29,56 @@ const Contract = (props) => {
     const [isOperational, setIsOperational] = useState(false);
 
 
-    const axios = axiosJS.create({
-        baseURL: '/api/',
-        timeout: 1000
-    });
-
-
-    const getAirlines = async () => {
-        try {
-            let airlineCount = await flightSuretyApp.methods.getAirlineCount().call({from: owner});
-            console.log({airlineCount});
-            // Add each registered and funded airline (created by server) to state
-            for (let i = 0; i < airlineCount; i++) {
-                let airline = await flightSuretyApp.methods.getAirlineByIdx(i).call({from: owner});
-                setAirlines(a => a.concat({
-                    airlineAccount: airline.airlineAccount,
-                    companyName: airline.companyName
-                }));
-            }
-        } catch (e) {
-            console.error({e});
-        }
-    };
-
-
-    const getFlights = async () => {
-        try {
-            const {data} = await axios.get('/flights');
-            setFlights(data);
-            console.log({data});
-        } catch (e) {
-            console.error({e});
-        }
-    };
-
-
-    const getPassengers = (accts) => {
-        return () => {
-            const offset = 10;
-            let counter = 1;
-            while (counter < 5) {
-                setPassengers((p) => p.concat(accts[offset + counter++]));
-            }
-        }
-    };
 
 
     // On startup, initialise
     useEffect(() => {
-        console.log({config}, {web3});
-        console.log("initialize", {owner});
+
+        const axios = axiosJS.create({
+            baseURL: '/api/',
+            timeout: 1000
+        });
+
+        const getAirlines = async () => {
+            try {
+                let airlineCount = await flightSuretyApp.methods.getAirlineCount().call({from: owner});
+                console.log({airlineCount});
+                // Add each registered and funded airline (created by server) to state
+                for (let i = 0; i < airlineCount; i++) {
+                    let airline = await flightSuretyApp.methods.getAirlineByIdx(i).call({from: owner});
+                    setAirlines(a => a.concat({
+                        airlineAccount: airline.airlineAccount,
+                        companyName: airline.companyName
+                    }));
+                }
+            } catch (e) {
+                console.error({e});
+            }
+        };
+
+
+        const getFlights = async () => {
+            try {
+                const {data} = await axios.get('/flights');
+                setFlights(data);
+                console.log({data});
+            } catch (e) {
+                console.error({e});
+            }
+        };
+
+
+        const getPassengers = (accts) => {
+            const passengerConcat = (accts, offset, counter) => (p) => p.concat(accts[offset + counter]);
+            return () => {
+                const offset = 10;
+                let counter = 1;
+                while (counter < 5) {
+                    setPassengers(passengerConcat(accts, offset, counter++));
+                }
+            }
+        };
+
 
         web3.eth.getAccounts((error, accts) => {
             console.log('Got accounts!', {accts}, {error})
@@ -102,34 +102,47 @@ const Contract = (props) => {
                     });
             }
         });
-    }, []);
+    }, [owner]);
 
     console.log({airlines})
 
     // const {flights} = props;
 
     return (
-        <React.Fragment>
-            <Container>
-                <Row>
-                    <Col>
-                        <Tabs defaultActiveKey="info" id="uncontrolled-tab-example">
+        < React.Fragment >
+        < Container >
+        < Row >
+        < Col >
+        < Tabs
+    defaultActiveKey = "info"
+    id = "uncontrolled-tab-example" >
 
-                            <Tab eventKey="info" title="Info">
-                                <InfoTab isoperational={isOperational.toString()} airlines={airlines} flights={flights}
-                                         passengers={passengers}/>
-                            </Tab>
+        < Tab
+    eventKey = "info"
+    title = "Info" >
+        < InfoTab
+    isoperational = {isOperational.toString()}
+    airlines = {airlines}
+    flights = {flights}
+    passengers = {passengers}
+    />
+    < /Tab>
 
-                            <Tab eventKey="profile" title="Insurance">
-                                <InsuranceTab  flightsuretyapp={flightSuretyApp} flights={flights}
-                                               passengers={passengers} />
-                            </Tab>
-                        </Tabs>
-                    </Col>
-                </Row>
-            </Container>
-        </React.Fragment>
-    )
+    < Tab
+    eventKey = "profile"
+    title = "Insurance" >
+        < InsuranceTab
+    flightsuretyapp = {flightSuretyApp}
+    flights = {flights}
+    passengers = {passengers}
+    />
+    < /Tab>
+    < /Tabs>
+    < /Col>
+    < /Row>
+    < /Container>
+    < /React.Fragment>
+)
 };
 
 export default Contract;

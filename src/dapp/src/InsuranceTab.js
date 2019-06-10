@@ -56,7 +56,7 @@ const InsuranceTab = (props) => {
                     console.log({result})
                     const intResult = parseInt(result);
                     const intCredit = credit && parseInt(credit);
-                    if (intCredit != intResult) {
+                    if (intCredit !== intResult) {
                         console.log({credit})
                         setCredit(intResult);
                     }
